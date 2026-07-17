@@ -4,7 +4,8 @@ const TimeSlot = require('../models/TimeSlot');
 const Student = require('../models/Student');
 const SystemSetting = require('../models/SystemSetting');
 const ClosedPeriod = require('../models/ClosedPeriod');
-const { sendBookingConfirmation, sendBookingCancellation } = require('../utils/emailService');
+const WaitingList = require('../models/WaitingList');
+const { sendBookingConfirmation, sendBookingCancellation, sendWaitingListAlert } = require('../utils/emailService');
 const { logAction } = require('../utils/auditLogger');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
@@ -12,6 +13,67 @@ const QRCode = require('qrcode');
 // Helper to generate reference number
 const generateReference = () => {
     return 'BKG' + crypto.randomBytes(4).toString('hex').toUpperCase();
+};
+
+// Helper: Auto-assign computer from waiting list
+const autoAssignFromWaitingList = async (dateObj, timeSlotId) => {
+    try {
+        // Find next in waiting list
+        const nextInLine = await WaitingList.findOne({
+            bookingDate: dateObj,
+            timeSlot: timeSlotId,
+            status: 'Waiting'
+        }).sort({ position: 1 }).populate('student').populate('timeSlot');
+
+        if (!nextInLine) return null; // No one in waiting list
+
+        // Find available PC
+        const allAvailablePcs = await Computer.find({ status: 'Available' });
+        if (allAvailablePcs.length === 0) return null;
+
+        const conflictingBookings = await Booking.find({
+            bookingDate: dateObj,
+            timeSlot: timeSlotId,
+            status: { $in: ['Confirmed', 'Active', 'Pending'] }
+        }).select('assignedComputer');
+
+        const conflictingPcIds = conflictingBookings.map(b => b.assignedComputer.toString());
+        const freePc = allAvailablePcs.find(pc => !conflictingPcIds.includes(pc._id.toString()));
+
+        if (!freePc) return null;
+
+        // Found a PC, auto-assign to the student
+        const refNumber = generateReference();
+        const qrContent = JSON.stringify({ referenceNumber: refNumber, studentId: nextInLine.student.studentId });
+        const qrCodeBase64 = await QRCode.toDataURL(qrContent);
+
+        const newBooking = await Booking.create({
+            referenceNumber: refNumber,
+            student: nextInLine.student._id,
+            bookingDate: dateObj,
+            timeSlot: timeSlotId,
+            assignedComputer: freePc._id,
+            purpose: 'Auto-assigned from waiting list',
+            status: 'Confirmed',
+            qrCode: qrCodeBase64
+        });
+
+        // Update waiting list status
+        nextInLine.status = 'Confirmed';
+        await nextInLine.save();
+
+        // Send email
+        await sendBookingConfirmation(nextInLine.student, {
+            referenceNumber: refNumber,
+            bookingDate: dateObj,
+            slotDetails: `${nextInLine.timeSlot.slotName} (${nextInLine.timeSlot.startTime} - ${nextInLine.timeSlot.endTime})`,
+            computerName: `${freePc.pcId} (${freePc.location})`
+        });
+
+        return newBooking;
+    } catch (error) {
+        console.error("Auto Assign Error: ", error);
+    }
 };
 
 // @desc    Book a computer
@@ -49,10 +111,8 @@ const createBooking = async (req, res) => {
         // 3. Check student limits
         const student = await Student.findById(studentId);
         const settings = await SystemSetting.findOne({}) || {};
-        
         const dailyLimit = settings.dailyBookingLimit || 2;
         
-        // Count student's bookings for this day
         const todayBookings = await Booking.countDocuments({
             student: studentId,
             bookingDate: dateObj,
@@ -63,7 +123,6 @@ const createBooking = async (req, res) => {
             return res.status(400).json({ message: `You have reached the maximum daily booking limit of ${dailyLimit}.` });
         }
 
-        // Check if student already booked this exact slot
         const duplicateBooking = await Booking.findOne({
             student: studentId,
             bookingDate: dateObj,
@@ -75,16 +134,21 @@ const createBooking = async (req, res) => {
             return res.status(400).json({ message: 'You already have a booking for this time slot on this date.' });
         }
 
-        // 4. Automatic Computer Allocation
-        // Find all computers that are currently Available or Good condition
-        const allAvailablePcs = await Computer.find({ status: 'Available' });
+        // Check if student is already in waiting list for this slot
+        const duplicateWaiting = await WaitingList.findOne({
+            student: studentId,
+            bookingDate: dateObj,
+            timeSlot: timeSlotId,
+            status: 'Waiting'
+        });
 
-        if (allAvailablePcs.length === 0) {
-            // No computers are physically available at all
-            return res.status(400).json({ message: 'No computers are currently available in the IT Center.' });
+        if (duplicateWaiting) {
+             return res.status(400).json({ message: 'You are already on the waiting list for this time slot on this date.' });
         }
 
-        // Find bookings that overlap with this date and slot
+        // 4. Automatic Computer Allocation
+        const allAvailablePcs = await Computer.find({ status: 'Available' });
+
         const conflictingBookings = await Booking.find({
             bookingDate: dateObj,
             timeSlot: timeSlotId,
@@ -92,19 +156,32 @@ const createBooking = async (req, res) => {
         }).select('assignedComputer');
 
         const conflictingPcIds = conflictingBookings.map(b => b.assignedComputer.toString());
-
-        // Find a PC that is NOT in conflictingPcIds
         const freePc = allAvailablePcs.find(pc => !conflictingPcIds.includes(pc._id.toString()));
 
         if (!freePc) {
-            // In the future this should go to the Waiting List
-            return res.status(400).json({ message: 'All computers are fully booked for this time slot. Waiting list feature coming soon.' });
+            // NO PC AVAILABLE -> Add to Waiting List
+            const countInWaitingList = await WaitingList.countDocuments({
+                bookingDate: dateObj,
+                timeSlot: timeSlotId,
+                status: 'Waiting'
+            });
+
+            const waitlistEntry = await WaitingList.create({
+                bookingDate: dateObj,
+                timeSlot: timeSlotId,
+                student: studentId,
+                position: countInWaitingList + 1
+            });
+
+            return res.status(202).json({ 
+                success: true, 
+                message: 'All computers are booked. You have been added to the waiting list.', 
+                data: { waitingList: true, position: waitlistEntry.position } 
+            });
         }
 
         // 5. Create Booking
         const refNumber = generateReference();
-        
-        // Generate QR Code for the booking check-in
         const qrContent = JSON.stringify({ referenceNumber: refNumber, studentId: student.studentId });
         const qrCodeBase64 = await QRCode.toDataURL(qrContent);
 
@@ -115,11 +192,10 @@ const createBooking = async (req, res) => {
             timeSlot: timeSlotId,
             assignedComputer: freePc._id,
             purpose,
-            status: 'Confirmed', // Auto confirm based on settings usually
+            status: 'Confirmed',
             qrCode: qrCodeBase64
         });
 
-        // 6. Notifications
         await sendBookingConfirmation(student, {
             referenceNumber: refNumber,
             bookingDate: dateObj,
@@ -156,7 +232,6 @@ const cancelBooking = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found.' });
         }
 
-        // Authorization: Only the owner or an admin can cancel
         if (req.user.role !== 'admin' && booking.student._id.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'Not authorized to cancel this booking.' });
         }
@@ -185,6 +260,9 @@ const cancelBooking = async (req, res) => {
             recordId: booking._id.toString(),
             description: `Booking ${booking.referenceNumber} cancelled. Reason: ${booking.cancellationReason}`
         });
+
+        // Trigger auto-assignment from waiting list
+        autoAssignFromWaitingList(booking.bookingDate, booking.timeSlot._id);
 
         res.json({ success: true, message: 'Booking cancelled successfully.' });
     } catch (error) {
@@ -239,5 +317,6 @@ module.exports = {
     createBooking,
     cancelBooking,
     getMyBookings,
-    getAllBookings
+    getAllBookings,
+    autoAssignFromWaitingList
 };

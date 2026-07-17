@@ -28,6 +28,9 @@ app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/programmes', require('./routes/programmeRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/time-slots', require('./routes/timeSlotRoutes'));
+app.use('/api/sessions', require('./routes/sessionRoutes'));
+app.use('/api/waiting-list', require('./routes/waitingListRoutes'));
+
 
 // Basic test route
 app.get('/', (req, res) => {
