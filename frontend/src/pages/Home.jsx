@@ -1,198 +1,501 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { useEffect } from 'react';
-import { useThemeStore } from '../store/themeStore';
-import { Monitor, ArrowRight, ShieldCheck, Clock, Zap, BookOpen, Sun, Moon } from 'lucide-react';
-import Footer from '../components/Footer';
+import { useEffect, useState } from 'react';
+import { Monitor, ArrowRight, ShieldCheck, Clock, Zap, BookOpen, Sun, Moon, Users, Cpu, Calendar, CheckCircle } from 'lucide-react';
 
 const Home = () => {
-    const { user } = useAuthStore();
-    const { isDark, toggleTheme } = useThemeStore();
-    const navigate = useNavigate();
+    const [isDark, setIsDark] = useState(() => {
+        const saved = localStorage.getItem('theme');
+        return saved ? saved === 'dark' : true;
+    });
 
-    // Redirect to dashboard if already logged in
     useEffect(() => {
-        if (user) {
-            navigate('/dashboard');
+        if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
         }
-    }, [user, navigate]);
+    }, [isDark]);
+
+    const toggleTheme = () => setIsDark(prev => !prev);
+
+    // Theme tokens
+    const t = isDark ? {
+        bg: 'linear-gradient(135deg, #060614 0%, #0d0d2b 40%, #150d24 100%)',
+        navBg: 'rgba(10,10,30,0.7)',
+        navBorder: 'rgba(255,255,255,0.08)',
+        cardBg: 'rgba(255,255,255,0.04)',
+        cardBorder: 'rgba(255,255,255,0.1)',
+        cardBgHover: 'rgba(255,255,255,0.07)',
+        text: '#f0f0ff',
+        textSub: 'rgba(200,200,230,0.7)',
+        textMuted: 'rgba(180,180,210,0.45)',
+        orb1: 'rgba(100,80,255,0.18)',
+        orb2: 'rgba(0,180,255,0.12)',
+        orb3: 'rgba(180,60,255,0.1)',
+        featureBg: 'rgba(255,255,255,0.03)',
+        featureBorder: 'rgba(255,255,255,0.08)',
+        statBg: 'rgba(0,0,0,0.2)',
+        statBorder: 'rgba(255,255,255,0.06)',
+        btnSecBg: 'rgba(255,255,255,0.05)',
+        btnSecBorder: 'rgba(255,255,255,0.15)',
+        btnSecText: '#fff',
+        toggleBg: 'rgba(255,255,255,0.1)',
+        toggleBorder: 'rgba(255,255,255,0.15)',
+        footerBg: 'rgba(0,0,0,0.3)',
+        footerBorder: 'rgba(255,255,255,0.06)',
+        footerText: 'rgba(200,200,230,0.45)',
+        gridColor: 'rgba(255,255,255,0.03)',
+    } : {
+        bg: 'linear-gradient(135deg, #f0f2ff 0%, #e8ecff 40%, #f5f0ff 100%)',
+        navBg: 'rgba(255,255,255,0.75)',
+        navBorder: 'rgba(0,0,0,0.08)',
+        cardBg: 'rgba(255,255,255,0.85)',
+        cardBorder: 'rgba(0,0,0,0.08)',
+        cardBgHover: 'rgba(255,255,255,0.95)',
+        text: '#0f0f2e',
+        textSub: 'rgba(30,30,80,0.7)',
+        textMuted: 'rgba(30,30,80,0.4)',
+        orb1: 'rgba(100,80,255,0.12)',
+        orb2: 'rgba(0,160,255,0.1)',
+        orb3: 'rgba(160,60,255,0.08)',
+        featureBg: 'rgba(255,255,255,0.7)',
+        featureBorder: 'rgba(0,0,0,0.08)',
+        statBg: 'rgba(255,255,255,0.8)',
+        statBorder: 'rgba(0,0,0,0.07)',
+        btnSecBg: 'rgba(255,255,255,0.9)',
+        btnSecBorder: 'rgba(0,0,0,0.12)',
+        btnSecText: '#0f0f2e',
+        toggleBg: 'rgba(0,0,0,0.06)',
+        toggleBorder: 'rgba(0,0,0,0.1)',
+        footerBg: 'rgba(0,0,0,0.04)',
+        footerBorder: 'rgba(0,0,0,0.07)',
+        footerText: 'rgba(30,30,80,0.45)',
+        gridColor: 'rgba(0,0,0,0.04)',
+    };
+
+    const features = [
+        { icon: <Clock size={20} />, color: '#7b61ff', label: '3-Hr Daily Quota', desc: 'Fair usage enforced for all students' },
+        { icon: <ShieldCheck size={20} />, color: '#00d2ff', label: 'Admin Approved', desc: 'Verified student accounts only' },
+        { icon: <BookOpen size={20} />, color: '#00e676', label: 'Smart Booking', desc: 'Reserve your PC in advance' },
+        { icon: <Zap size={20} />, color: '#ff9800', label: 'Instant Check-In', desc: '15-min hold timeout system' },
+    ];
+
+    const stats = [
+        { icon: <Cpu size={18} />, color: '#7b61ff', label: 'Total PCs', value: '40 Seats', pulse: true },
+        { icon: <Users size={18} />, color: '#00d2ff', label: 'Active Students', value: 'Registered', pulse: false },
+        { icon: <Calendar size={18} />, color: '#00e676', label: 'Bookings Today', value: 'Live Tracking', pulse: false },
+        { icon: <CheckCircle size={18} />, color: '#ff9800', label: 'System Status', value: 'Online', pulse: true },
+    ];
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative overflow-hidden font-sans">
-            {/* Background Image with Dark & Gradient Overlays */}
-            <div 
-                className="absolute inset-0 bg-cover bg-center z-0 scale-105 filter blur-[2px] opacity-10 dark:opacity-40 transition-transform duration-1000"
-                style={{ backgroundImage: `url('/modern_it_lab.png')` }}
-            ></div>
-            
-            {/* Dark & Gradient Grids */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-slate-100 via-slate-50/90 to-blue-50/60 dark:from-slate-950 dark:via-slate-950/90 dark:to-slate-900/60 z-0"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#020617_1px,transparent_1px),linear-gradient(to_bottom,#020617_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-40 dark:opacity-30 z-0"></div>
+        <div style={{
+            minHeight: '100vh',
+            background: t.bg,
+            color: t.text,
+            fontFamily: "'Outfit', 'Inter', sans-serif",
+            position: 'relative',
+            overflowX: 'hidden',
+            transition: 'background 0.5s ease, color 0.3s ease',
+            display: 'flex',
+            flexDirection: 'column',
+        }}>
+            {/* Animated Background Orbs */}
+            <div style={{
+                position: 'fixed', top: '10%', left: '10%',
+                width: '500px', height: '500px', borderRadius: '50%',
+                background: t.orb1, filter: 'blur(120px)',
+                pointerEvents: 'none', zIndex: 0,
+                animation: 'orbFloat1 12s ease-in-out infinite',
+            }} />
+            <div style={{
+                position: 'fixed', bottom: '10%', right: '5%',
+                width: '450px', height: '450px', borderRadius: '50%',
+                background: t.orb2, filter: 'blur(100px)',
+                pointerEvents: 'none', zIndex: 0,
+                animation: 'orbFloat2 15s ease-in-out infinite',
+            }} />
+            <div style={{
+                position: 'fixed', top: '50%', right: '30%',
+                width: '300px', height: '300px', borderRadius: '50%',
+                background: t.orb3, filter: 'blur(80px)',
+                pointerEvents: 'none', zIndex: 0,
+                animation: 'orbFloat1 18s ease-in-out infinite reverse',
+            }} />
 
-            {/* Glowing Accent Orbs */}
-            <div className="absolute top-1/4 left-1/4 w-[35rem] h-[35rem] bg-blue-300/30 dark:bg-blue-600/10 rounded-full filter blur-[120px] pointer-events-none z-0 animate-pulse duration-[8s]"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full filter blur-[100px] pointer-events-none z-0 animate-pulse duration-[12s]"></div>
+            {/* Grid Background */}
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+                backgroundImage: `linear-gradient(${t.gridColor} 1px, transparent 1px), linear-gradient(90deg, ${t.gridColor} 1px, transparent 1px)`,
+                backgroundSize: '60px 60px',
+                maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 60%, transparent 100%)',
+                WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 60%, transparent 100%)',
+            }} />
 
-            {/* Content Container */}
-            <div className="relative z-10 flex flex-col min-h-screen">
-                {/* Navbar (Landing Page specific) */}
-                <header className="w-full bg-white/40 dark:bg-slate-950/20 backdrop-blur-md border-b border-gray-200/60 dark:border-white/5 py-4">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                        <div className="flex items-center gap-2.5 text-blue-400">
-                            <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                                <Monitor className="w-6 h-6 stroke-[2.5]" />
-                            </div>
-                            <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                                IT Center
-                            </span>
+            {/* ── NAVBAR ── */}
+            <header style={{
+                position: 'sticky', top: 0, zIndex: 100,
+                background: t.navBg,
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderBottom: `1px solid ${t.navBorder}`,
+                transition: 'background 0.4s ease',
+            }}>
+                <div style={{
+                    maxWidth: '1200px', margin: '0 auto',
+                    padding: '0 2rem',
+                    height: '64px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                    {/* Logo */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #7b61ff, #00d2ff)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 4px 20px rgba(123,97,255,0.4)',
+                        }}>
+                            <Monitor size={20} color="#fff" />
                         </div>
-                        <div className="flex gap-4">
-                            <Link 
-                                to="/login" 
-                                className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition duration-200"
-                            >
-                                Sign In
-                            </Link>
-                            <Link 
-                                to="/register" 
-                                className="px-4.5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 border border-blue-500 rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/25 transition duration-200"
-                            >
-                                Register
-                            </Link>
-                            {/* Dark / Light Mode Toggle */}
-                            <button
-                                onClick={toggleTheme}
-                                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                                className="ml-4 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-amber-300 dark:hover:border-indigo-500 shadow-sm hover:shadow-amber-100 dark:hover:shadow-indigo-900/30 text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-indigo-400 transition-all duration-300 cursor-pointer overflow-hidden group"
-                            >
-                                <span className={`absolute transition-all duration-500 ease-in-out ${
-                                    isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'
-                                }`}>
-                                    <Moon className="w-4.5 h-4.5" />
-                                </span>
-                                <span className={`absolute transition-all duration-500 ease-in-out ${
-                                    !isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'
-                                }`}>
-                                    <Sun className="w-4.5 h-4.5" />
-                                </span>
-                            </button>
+                        <div>
+                            <div style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                                IT Center
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: t.textMuted, letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>
+                                Management System
+                            </div>
                         </div>
                     </div>
-                </header>
 
-                {/* Hero Section */}
-                <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16 py-16">
-                    {/* Left Column: Title & Features */}
-                    <div className="flex-1 text-center lg:text-left space-y-8 max-w-2xl lg:max-w-none">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400 uppercase tracking-wider shadow-sm">
-                            <Zap className="w-3.5 h-3.5 fill-current animate-bounce" /> Smart PC Allocation System
+                    {/* Nav Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Link to="/login" style={{
+                            padding: '8px 18px', borderRadius: '10px',
+                            fontWeight: 600, fontSize: '0.9rem',
+                            color: t.text, textDecoration: 'none',
+                            background: t.btnSecBg,
+                            border: `1px solid ${t.btnSecBorder}`,
+                            transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                        >
+                            Sign In
+                        </Link>
+                        <Link to="/register" style={{
+                            padding: '8px 20px', borderRadius: '10px',
+                            fontWeight: 700, fontSize: '0.9rem',
+                            color: '#fff', textDecoration: 'none',
+                            background: 'linear-gradient(135deg, #7b61ff, #5b3ff0)',
+                            boxShadow: '0 4px 16px rgba(123,97,255,0.35)',
+                            transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,97,255,0.5)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(123,97,255,0.35)'; }}
+                        >
+                            Register
+                        </Link>
+
+                        {/* Dark / Light Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            id="theme-toggle-btn"
+                            style={{
+                                width: '40px', height: '40px', borderRadius: '12px',
+                                background: t.toggleBg,
+                                border: `1px solid ${t.toggleBorder}`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', color: t.text,
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0,
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(123,97,255,0.2)'; e.currentTarget.style.borderColor = '#7b61ff'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = t.toggleBg; e.currentTarget.style.borderColor = t.toggleBorder; }}
+                        >
+                            {isDark ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="#7b61ff" />}
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* ── HERO SECTION ── */}
+            <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+                <div style={{
+                    maxWidth: '1200px', margin: '0 auto', padding: '5rem 2rem 4rem',
+                    display: 'flex', alignItems: 'center', gap: '4rem',
+                    flexWrap: 'wrap',
+                }}>
+                    {/* Left Column */}
+                    <div style={{ flex: '1 1 480px', minWidth: '280px' }}>
+                        {/* Badge */}
+                        <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            padding: '6px 14px', borderRadius: '100px',
+                            background: 'rgba(123,97,255,0.12)',
+                            border: '1px solid rgba(123,97,255,0.3)',
+                            fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em',
+                            color: '#7b61ff', textTransform: 'uppercase',
+                            marginBottom: '1.5rem',
+                        }}>
+                            <Zap size={13} fill="#7b61ff" />
+                            Smart PC Allocation System
                         </div>
-                        
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15] text-slate-900 dark:text-white">
-                            Maximize Your Lab <br className="hidden sm:inline" />
-                            <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                                Productivity & Focus
+
+                        {/* Heading */}
+                        <h1 style={{
+                            fontSize: 'clamp(2.2rem, 5vw, 3.5rem)',
+                            fontWeight: 800,
+                            lineHeight: 1.1,
+                            letterSpacing: '-0.03em',
+                            marginBottom: '1.25rem',
+                            color: t.text,
+                        }}>
+                            Maximize Your Lab{' '}
+                            <span style={{
+                                background: 'linear-gradient(135deg, #7b61ff 0%, #00d2ff 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}>
+                                Productivity
                             </span>
                         </h1>
 
-                        <p className="text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                            Welcome to the University IT Center PC Booking System. Register your student or staff profile, reserve high-performance workstations, check in dynamically, and manage your daily quota effortlessly.
+                        <p style={{
+                            fontSize: '1.05rem', lineHeight: 1.7,
+                            color: t.textSub, marginBottom: '2.5rem',
+                            maxWidth: '500px',
+                        }}>
+                            University IT Center PC Booking System. Register your student profile, reserve high-performance workstations, and manage your daily quota effortlessly.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                            <Link 
-                                to="/register" 
-                                className="group flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/30 transition-all duration-200 cursor-pointer"
+                        {/* CTA Buttons */}
+                        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '3rem' }}>
+                            <Link to="/register" style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                                padding: '13px 28px', borderRadius: '12px',
+                                fontWeight: 700, fontSize: '0.95rem',
+                                color: '#fff', textDecoration: 'none',
+                                background: 'linear-gradient(135deg, #7b61ff, #00d2ff)',
+                                boxShadow: '0 6px 24px rgba(123,97,255,0.4)',
+                                transition: 'all 0.25s ease',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(123,97,255,0.55)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(123,97,255,0.4)'; }}
                             >
-                                Book a Workstation 
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                Book a Workstation <ArrowRight size={18} />
                             </Link>
-                            <Link 
-                                to="/login" 
-                                className="flex items-center justify-center bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-slate-700 dark:text-white font-semibold px-8 py-3.5 rounded-xl shadow-sm dark:shadow-none transition duration-200 cursor-pointer"
+                            <Link to="/login" style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                                padding: '13px 28px', borderRadius: '12px',
+                                fontWeight: 600, fontSize: '0.95rem',
+                                color: t.btnSecText, textDecoration: 'none',
+                                background: t.btnSecBg,
+                                border: `1px solid ${t.btnSecBorder}`,
+                                backdropFilter: 'blur(10px)',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                             >
                                 Member Dashboard
                             </Link>
                         </div>
 
-                        {/* Interactive Features Grid */}
-                        <div className="grid grid-cols-2 gap-4 pt-6">
-                            <div className="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.05] shadow-sm dark:shadow-none flex gap-3 items-start">
-                                <Clock className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">3-Hr Daily Quota</h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enforcing fairness across student users.</p>
+                        {/* Feature Cards Grid */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                            gap: '12px',
+                        }}>
+                            {features.map((f, i) => (
+                                <div key={i} style={{
+                                    padding: '14px 16px',
+                                    background: t.featureBg,
+                                    border: `1px solid ${t.featureBorder}`,
+                                    borderRadius: '14px',
+                                    backdropFilter: 'blur(12px)',
+                                    display: 'flex', gap: '12px', alignItems: 'flex-start',
+                                    transition: 'all 0.2s ease',
+                                    cursor: 'default',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = t.cardBgHover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = t.featureBg; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                >
+                                    <div style={{
+                                        width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                                        background: `${f.color}18`,
+                                        border: `1px solid ${f.color}30`,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        color: f.color,
+                                    }}>
+                                        {f.icon}
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: '3px', color: t.text }}>{f.label}</div>
+                                        <div style={{ fontSize: '0.78rem', color: t.textMuted, lineHeight: 1.4 }}>{f.desc}</div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.05] shadow-sm dark:shadow-none flex gap-3 items-start">
-                                <BookOpen className="w-5 h-5 text-indigo-500 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">Lecturer Access</h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Academic profiles get unlimited daily quota.</p>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Right Column: Glassmorphism Promo Card */}
-                    <div className="flex-1 w-full max-w-md">
-                        <div className="bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl border border-gray-200 dark:border-white/[0.08] rounded-3xl shadow-xl dark:shadow-2xl p-8 space-y-6 relative group overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-purple-50/50 dark:from-blue-500/5 dark:to-purple-500/5 pointer-events-none"></div>
-                            
-                            <div className="flex justify-between items-center">
-                                <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20 text-blue-400">
-                                    <Monitor className="w-7 h-7 stroke-[2.5]" />
+                    {/* Right Column – Glass Status Card */}
+                    <div style={{ flex: '0 1 380px', minWidth: '280px' }}>
+                        <div style={{
+                            background: t.cardBg,
+                            border: `1px solid ${t.cardBorder}`,
+                            borderRadius: '24px',
+                            backdropFilter: 'blur(24px)',
+                            WebkitBackdropFilter: 'blur(24px)',
+                            padding: '2rem',
+                            boxShadow: isDark
+                                ? '0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)'
+                                : '0 20px 60px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                        }}>
+                            {/* Card glow accent */}
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
+                                background: 'linear-gradient(90deg, #7b61ff, #00d2ff, #7b61ff)',
+                                borderRadius: '24px 24px 0 0',
+                            }} />
+
+                            {/* Card Header */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                }}>
+                                    <div style={{
+                                        width: '42px', height: '42px', borderRadius: '12px',
+                                        background: 'linear-gradient(135deg, rgba(123,97,255,0.2), rgba(0,210,255,0.2))',
+                                        border: '1px solid rgba(123,97,255,0.3)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        color: '#7b61ff',
+                                    }}>
+                                        <Monitor size={20} />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '1rem', color: t.text }}>IT Center Status</div>
+                                        <div style={{ fontSize: '0.75rem', color: t.textMuted }}>Live system overview</div>
+                                    </div>
                                 </div>
-                                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
-                                    Active Labs
+                                <span style={{
+                                    padding: '4px 12px', borderRadius: '100px',
+                                    background: 'rgba(0,230,118,0.15)',
+                                    border: '1px solid rgba(0,230,118,0.3)',
+                                    fontSize: '0.72rem', fontWeight: 700,
+                                    color: '#00e676', letterSpacing: '0.04em',
+                                    textTransform: 'uppercase',
+                                    display: 'flex', alignItems: 'center', gap: '5px',
+                                }}>
+                                    <span style={{
+                                        width: '6px', height: '6px', borderRadius: '50%',
+                                        background: '#00e676',
+                                        animation: 'pulse 2s infinite',
+                                        display: 'inline-block',
+                                    }} />
+                                    Live
                                 </span>
                             </div>
 
-                            <div className="space-y-2">
-                                <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">IT Center Status</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    Monitor lab seats and book your computer before walking in.
-                                </p>
+                            {/* Stats */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.5rem' }}>
+                                {stats.map((s, i) => (
+                                    <div key={i} style={{
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        padding: '12px 14px',
+                                        background: t.statBg,
+                                        border: `1px solid ${t.statBorder}`,
+                                        borderRadius: '12px',
+                                        transition: 'all 0.2s',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{
+                                                width: '30px', height: '30px', borderRadius: '8px',
+                                                background: `${s.color}15`,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                color: s.color,
+                                            }}>
+                                                {s.icon}
+                                            </div>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: t.textSub }}>{s.label}</span>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '0.82rem', fontWeight: 700, color: s.color,
+                                            display: 'flex', alignItems: 'center', gap: '6px',
+                                        }}>
+                                            {s.pulse && (
+                                                <span style={{
+                                                    width: '7px', height: '7px', borderRadius: '50%',
+                                                    background: s.color,
+                                                    display: 'inline-block',
+                                                    animation: 'pulse 2s infinite',
+                                                }} />
+                                            )}
+                                            {s.value}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
 
-                            {/* Stat details inside glass box */}
-                            <div className="space-y-3.5">
-                                <div className="flex justify-between items-center p-3.5 rounded-xl bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.04] shadow-sm dark:shadow-none">
-                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Total Available PCs</span>
-                                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        Online (40 seats)
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center p-3.5 rounded-xl bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.04] shadow-sm dark:shadow-none">
-                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Smart Check-In</span>
-                                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded">
-                                        15-Min Hold Timeout
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center p-3.5 rounded-xl bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.04] shadow-sm dark:shadow-none">
-                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Security Clearance</span>
-                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                                        <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Admin Approved
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="pt-2">
-                                <Link 
-                                    to="/login"
-                                    className="w-full flex justify-center py-3 px-4 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 rounded-xl shadow-sm dark:shadow-lg text-sm font-bold text-slate-800 dark:text-white bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200"
-                                >
-                                    Log In to Book Now
-                                </Link>
-                            </div>
+                            {/* CTA */}
+                            <Link to="/login" style={{
+                                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                                padding: '14px',
+                                background: 'linear-gradient(135deg, #7b61ff, #00d2ff)',
+                                borderRadius: '14px',
+                                color: '#fff', fontWeight: 700, fontSize: '0.95rem',
+                                textDecoration: 'none',
+                                boxShadow: '0 6px 20px rgba(123,97,255,0.35)',
+                                transition: 'all 0.25s ease',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(123,97,255,0.5)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,97,255,0.35)'; }}
+                            >
+                                Log In to Book Now <ArrowRight size={16} />
+                            </Link>
                         </div>
                     </div>
-                </main>
+                </div>
+            </main>
 
-                {/* Footer Component */}
-                <Footer />
-            </div>
+            {/* ── FOOTER ── */}
+            <footer style={{
+                position: 'relative', zIndex: 1,
+                borderTop: `1px solid ${t.footerBorder}`,
+                background: t.footerBg,
+                backdropFilter: 'blur(12px)',
+                padding: '1.5rem 2rem',
+                textAlign: 'center',
+                fontSize: '0.82rem',
+                color: t.footerText,
+            }}>
+                © {new Date().getFullYear()} University IT Center Management System. All rights reserved.
+            </footer>
+
+            {/* Keyframe Animations */}
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+                @keyframes orbFloat1 {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(30px, -20px) scale(1.05); }
+                    66% { transform: translate(-20px, 15px) scale(0.97); }
+                }
+                @keyframes orbFloat2 {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(-25px, 20px) scale(1.03); }
+                    66% { transform: translate(20px, -15px) scale(0.98); }
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.5; transform: scale(0.85); }
+                }
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+            `}</style>
         </div>
     );
 };

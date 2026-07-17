@@ -21,8 +21,24 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = async (formData) => {
-        const { data } = await API.post('/auth/register', formData);
-        return data;
+        const hasFiles = formData.idCardImage || formData.profileImage;
+        if (hasFiles) {
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                if (formData[key] !== null && formData[key] !== undefined) {
+                    data.append(key, formData[key]);
+                }
+            });
+            const response = await API.post('/auth/register', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return response.data;
+        } else {
+            const { data } = await API.post('/auth/register', formData);
+            return data;
+        }
     };
 
     const logout = () => {

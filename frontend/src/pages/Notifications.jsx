@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, CheckCheck, BellOff } from 'lucide-react';
-import DashboardLayout from '../../components/DashboardLayout';
-import API from '../../utils/api';
+import DashboardLayout from '../components/DashboardLayout';
+import API from '../utils/api';
 
 const typeColors = {
   booking: '#7b61ff',

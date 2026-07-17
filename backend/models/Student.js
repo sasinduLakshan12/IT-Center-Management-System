@@ -61,7 +61,7 @@ const studentSchema = new mongoose.Schema({
     },
     idCardImage: {
         type: String, // file path / url
-        required: true
+        default: ''
     },
     status: {
         type: String,
