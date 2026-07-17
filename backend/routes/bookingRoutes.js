@@ -1,11 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { bookPC, checkIn, checkOut, getMyActiveBooking } = require('../controllers/bookingController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, adminOnly } = require('../middleware/authMiddleware');
+const {
+    createBooking,
+    cancelBooking,
+    getMyBookings,
+    getAllBookings
+} = require('../controllers/bookingController');
 
-router.get('/my-active', protect, getMyActiveBooking);
-router.post('/', protect, bookPC);
-router.put('/:id/checkin', protect, checkIn);
-router.put('/:id/checkout', protect, checkOut);
+// All routes require authentication
+router.use(protect);
+
+// Student Routes
+router.post('/', createBooking);
+router.get('/my-bookings', getMyBookings);
+
+// Shared Routes (Student or Admin can cancel)
+router.put('/:id/cancel', cancelBooking);
+
+// Admin Routes
+router.get('/', adminOnly, getAllBookings);
 
 module.exports = router;

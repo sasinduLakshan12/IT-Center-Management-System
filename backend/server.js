@@ -21,9 +21,13 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/pcs', require('./routes/pcRoutes'));
-app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/computers', require('./routes/computerRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/departments', require('./routes/departmentRoutes'));
+app.use('/api/programmes', require('./routes/programmeRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
+app.use('/api/time-slots', require('./routes/timeSlotRoutes'));
 
 // Basic test route
 app.get('/', (req, res) => {
