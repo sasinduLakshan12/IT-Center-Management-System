@@ -1,53 +1,48 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Home from './pages/Home';
-import StudentDashboard from './pages/StudentDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import { useAuthStore } from './store/authStore';
-import { useThemeStore } from './store/themeStore';
+import StudentDashboard from './pages/student/StudentDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
-const DashboardLayout = () => {
-  const { user } = useAuthStore();
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50/50 dark:bg-slate-950">
-      <Navbar />
-      <main className="flex-grow">
-        {user?.role === 'admin' ? <AdminDashboard /> : <StudentDashboard />}
-      </main>
-      <Footer />
-    </div>
-  );
+// Protected Route wrapper
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div style={{ color: '#fff', textAlign: 'center', padding: '4rem' }}>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (requiredRole && user.role !== requiredRole) return <Navigate to="/login" replace />;
+  return children;
 };
 
-function App() {
-  const user = useAuthStore(state => state.user);
-  const { isDark, initTheme } = useThemeStore();
-
-  // Initialize theme from persisted preference on mount
-  useEffect(() => {
-    initTheme(isDark);
-  }, []);
-
+function AppRoutes() {
   return (
-    <Router>
-      <div className="min-h-screen font-sans flex flex-col">
-        <Routes>
-          <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
-          <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
-          <Route path="/dashboard" element={user ? <DashboardLayout /> : <Navigate to="/login" />} />
-          <Route path="/" element={<Home />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-        <ToastContainer position="top-right" autoClose={3000} />
-      </div>
-    </Router>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Student Routes */}
+      <Route path="/student/dashboard" element={
+        <ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>
+      } />
+
+      {/* Admin Routes */}
+      <Route path="/admin/dashboard" element={
+        <ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>
+      } />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
