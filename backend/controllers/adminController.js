@@ -1,39 +1,49 @@
-const User = require('../models/User');
-const PC = require('../models/PC');
+const Student = require('../models/Student');
+const Admin = require('../models/Admin');
+const Computer = require('../models/Computer');
 const Booking = require('../models/Booking');
+const { sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
+const { logAction } = require('../utils/auditLogger');
 
 // @desc    Get Admin Dashboard Stats
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 const getStats = async (req, res) => {
     try {
-        const totalPCs = await PC.countDocuments({});
-        const availablePCs = await PC.countDocuments({ status: 'available' });
-        const occupiedPCs = await PC.countDocuments({ status: 'occupied' });
-        const bookedPCs = await PC.countDocuments({ status: 'booked' });
-        const outOfOrderPCs = await PC.countDocuments({ status: 'out-of-order' });
+        const totalComputers = await Computer.countDocuments({});
+        const availableComputers = await Computer.countDocuments({ status: 'Available' });
+        const reservedComputers = await Computer.countDocuments({ status: 'Reserved' });
+        const inUseComputers = await Computer.countDocuments({ status: 'In Use' });
+        const maintenanceComputers = await Computer.countDocuments({ status: { $in: ['Under Maintenance', 'Damaged', 'Out of Service'] } });
 
-        const totalStudents = await User.countDocuments({ role: 'student' });
-        const totalLecturers = await User.countDocuments({ role: 'lecturer' });
-        const pendingApprovals = await User.countDocuments({ isApproved: false, role: { $ne: 'admin' } });
+        const totalStudents = await Student.countDocuments({ status: 'Approved' });
+        const pendingApprovals = await Student.countDocuments({ status: 'Pending Approval' });
+        const suspendedStudents = await Student.countDocuments({ status: 'Suspended' });
 
-        const activeSessions = await Booking.countDocuments({ status: 'active' });
+        const activeSessions = await Booking.countDocuments({ status: 'Active' });
+        const todayBookings = await Booking.countDocuments({ 
+            bookingDate: { 
+                $gte: new Date().setHours(0, 0, 0, 0),
+                $lt: new Date().setHours(23, 59, 59, 999)
+            }
+        });
 
         res.json({
-            pcs: {
-                total: totalPCs,
-                available: availablePCs,
-                occupied: occupiedPCs,
-                booked: bookedPCs,
-                outOfOrder: outOfOrderPCs
+            computers: {
+                total: totalComputers,
+                available: availableComputers,
+                reserved: reservedComputers,
+                inUse: inUseComputers,
+                maintenance: maintenanceComputers
             },
-            users: {
-                students: totalStudents,
-                lecturers: totalLecturers,
-                pendingApprovals
+            students: {
+                approved: totalStudents,
+                pending: pendingApprovals,
+                suspended: suspendedStudents
             },
             sessions: {
-                active: activeSessions
+                active: activeSessions,
+                today: todayBookings
             }
         });
     } catch (error) {
@@ -41,80 +51,148 @@ const getStats = async (req, res) => {
     }
 };
 
-// @desc    Get pending user registrations
+// @desc    Get pending student registrations
 // @route   GET /api/admin/pending-approvals
 // @access  Private/Admin
 const getPendingApprovals = async (req, res) => {
     try {
-        const pending = await User.find({ isApproved: false, role: { $ne: 'admin' } }).select('-password');
+        const pending = await Student.find({ status: 'Pending Approval' })
+            .select('-password')
+            .populate('department', 'departmentName')
+            .populate('degreeProgramme', 'programmeName');
         res.json(pending);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Approve a pending user
-// @route   PUT /api/admin/approve-user/:id
+// @desc    Approve a pending student
+// @route   PUT /api/admin/approve-student/:id
 // @access  Private/Admin
-const approveUser = async (req, res) => {
+const approveStudent = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        const student = await Student.findById(req.params.id);
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
         }
 
-        user.isApproved = true;
-        await user.save();
+        if (student.status !== 'Pending Approval') {
+            return res.status(400).json({ message: 'Student is not pending approval.' });
+        }
 
-        res.json({ message: `Approved user: ${user.name} (${user.studentId})` });
+        student.status = 'Approved';
+        await student.save();
+
+        // Send Email
+        await sendApprovalEmail(student);
+
+        // Log Action
+        await logAction({
+            userId: req.user._id,
+            userModel: 'Admin',
+            operatorName: req.user.name,
+            role: 'Admin',
+            action: 'Approve Student',
+            module: 'Admin',
+            recordId: student._id.toString(),
+            description: `Admin approved student ${student.studentId} (${student.name}).`
+        });
+
+        res.json({ message: `Approved student: ${student.name} (${student.studentId})` });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Reject/Delete a pending user
-// @route   DELETE /api/admin/reject-user/:id
+// @desc    Reject a pending student
+// @route   PUT /api/admin/reject-student/:id
 // @access  Private/Admin
-const rejectUser = async (req, res) => {
+const rejectStudent = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        const { reason } = req.body;
+        if (!reason) {
+            return res.status(400).json({ message: 'Rejection reason is required.' });
         }
 
-        await User.findByIdAndDelete(req.params.id);
-        res.json({ message: 'User registration rejected and account deleted.' });
+        const student = await Student.findById(req.params.id);
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        student.status = 'Rejected';
+        student.rejectionReason = reason;
+        await student.save();
+
+        // Send Email
+        await sendRejectionEmail(student, reason);
+
+        // Log Action
+        await logAction({
+            userId: req.user._id,
+            userModel: 'Admin',
+            operatorName: req.user.name,
+            role: 'Admin',
+            action: 'Reject Student',
+            module: 'Admin',
+            recordId: student._id.toString(),
+            description: `Admin rejected student ${student.studentId}. Reason: ${reason}`
+        });
+
+        res.json({ message: 'Student registration rejected successfully.' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Get all users (excluding admins)
-// @route   GET /api/admin/users
+// @desc    Get all students
+// @route   GET /api/admin/students
 // @access  Private/Admin
-const getUsers = async (req, res) => {
+const getStudents = async (req, res) => {
     try {
-        const users = await User.find({ role: { $ne: 'admin' } }).select('-password');
-        res.json(users);
+        const students = await Student.find({}).select('-password')
+            .populate('department', 'departmentName')
+            .populate('degreeProgramme', 'programmeName');
+        res.json(students);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Toggle block status of a user
-// @route   PUT /api/admin/users/:id/block
+// @desc    Toggle block/suspend status of a student
+// @route   PUT /api/admin/students/:id/suspend
 // @access  Private/Admin
-const toggleBlockUser = async (req, res) => {
+const toggleSuspendStudent = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        const student = await Student.findById(req.params.id);
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
         }
 
-        user.isBlocked = !user.isBlocked;
-        await user.save();
+        if (student.status === 'Suspended') {
+            student.status = 'Approved';
+            student.penaltyStatus = 'None';
+            student.penaltyEnd = null;
+        } else {
+            student.status = 'Suspended';
+            student.penaltyStatus = 'Suspended';
+            // Default 7 days suspension, could be dynamic
+            student.penaltyEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); 
+        }
 
-        res.json({ message: `User ${user.name} has been ${user.isBlocked ? 'blocked' : 'unblocked'}.`, user });
+        await student.save();
+
+        await logAction({
+            userId: req.user._id,
+            userModel: 'Admin',
+            operatorName: req.user.name,
+            role: 'Admin',
+            action: 'Toggle Suspend',
+            module: 'Admin',
+            recordId: student._id.toString(),
+            description: `Admin changed suspension status for ${student.studentId} to ${student.status}.`
+        });
+
+        res.json({ message: `Student ${student.name} is now ${student.status}.`, student });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -125,9 +203,10 @@ const toggleBlockUser = async (req, res) => {
 // @access  Private/Admin
 const getActiveSessions = async (req, res) => {
     try {
-        const sessions = await Booking.find({ status: { $in: ['booked', 'active'] } })
-            .populate('studentId', 'name studentId email role')
-            .populate('pcId', 'pcId location');
+        const sessions = await Booking.find({ status: { $in: ['Confirmed', 'Active'] } })
+            .populate('student', 'name studentId email')
+            .populate('assignedComputer', 'pcId location')
+            .populate('timeSlot', 'slotName startTime endTime');
         res.json(sessions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -144,16 +223,17 @@ const cancelSession = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        // Set status to cancelled
-        booking.status = 'cancelled';
-        booking.endTime = new Date();
+        booking.status = 'Cancelled';
+        booking.cancellationReason = 'Terminated by Administrator';
+        if (booking.status === 'Active') {
+            booking.checkOutTime = new Date();
+        }
         await booking.save();
 
-        // Release PC status
-        const pc = await PC.findById(booking.pcId);
-        if (pc) {
-            pc.status = 'available';
-            await pc.save();
+        const computer = await Computer.findById(booking.assignedComputer);
+        if (computer) {
+            computer.status = 'Available';
+            await computer.save();
         }
 
         res.json({ message: 'Session terminated successfully.' });
@@ -162,29 +242,29 @@ const cancelSession = async (req, res) => {
     }
 };
 
-// @desc    Delete a PC
-// @route   DELETE /api/admin/pcs/:id
+// @desc    Delete a Computer
+// @route   DELETE /api/admin/computers/:id
 // @access  Private/Admin
-const deletePC = async (req, res) => {
+const deleteComputer = async (req, res) => {
     try {
-        const pc = await PC.findById(req.params.id);
-        if (!pc) {
-            return res.status(404).json({ message: 'PC not found' });
+        const computer = await Computer.findById(req.params.id);
+        if (!computer) {
+            return res.status(404).json({ message: 'Computer not found' });
         }
 
-        await PC.findByIdAndDelete(req.params.id);
-        res.json({ message: 'PC deleted successfully.' });
+        await Computer.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Computer deleted successfully.' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Get all reported issue tickets (out-of-order PCs)
+// @desc    Get all reported issue tickets
 // @route   GET /api/admin/issues
 // @access  Private/Admin
 const getIssues = async (req, res) => {
     try {
-        const issues = await PC.find({ status: 'out-of-order' });
+        const issues = await Computer.find({ status: { $in: ['Damaged', 'Out of Service', 'Under Maintenance'] } });
         res.json(issues);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -196,16 +276,15 @@ const getIssues = async (req, res) => {
 // @access  Private/Admin
 const resolveIssue = async (req, res) => {
     try {
-        const pc = await PC.findById(req.params.id);
-        if (!pc) {
-            return res.status(404).json({ message: 'PC not found' });
+        const computer = await Computer.findById(req.params.id);
+        if (!computer) {
+            return res.status(404).json({ message: 'Computer not found' });
         }
 
-        pc.status = 'available';
-        pc.issueReported = null;
-        await pc.save();
+        computer.status = 'Available';
+        await computer.save();
 
-        res.json({ message: 'Issue marked as resolved. PC is now available.', pc });
+        res.json({ message: 'Issue marked as resolved. Computer is now available.', computer });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -214,13 +293,13 @@ const resolveIssue = async (req, res) => {
 module.exports = {
     getStats,
     getPendingApprovals,
-    approveUser,
-    rejectUser,
-    getUsers,
-    toggleBlockUser,
+    approveStudent,
+    rejectStudent,
+    getStudents,
+    toggleSuspendStudent,
     getActiveSessions,
     cancelSession,
-    deletePC,
+    deleteComputer,
     getIssues,
     resolveIssue
 };

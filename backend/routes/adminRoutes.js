@@ -4,13 +4,13 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 const {
     getStats,
     getPendingApprovals,
-    approveUser,
-    rejectUser,
-    getUsers,
-    toggleBlockUser,
+    approveStudent,
+    rejectStudent,
+    getStudents,
+    toggleSuspendStudent,
     getActiveSessions,
     cancelSession,
-    deletePC,
+    deleteComputer,
     getIssues,
     resolveIssue
 } = require('../controllers/adminController');
@@ -24,19 +24,19 @@ router.get('/stats', getStats);
 
 // User approvals
 router.get('/pending-approvals', getPendingApprovals);
-router.put('/approve-user/:id', approveUser);
-router.delete('/reject-user/:id', rejectUser);
+router.put('/approve-student/:id', approveStudent);
+router.put('/reject-student/:id', rejectStudent); // Changed to PUT because it's a status update, not a DELETE according to PRD
 
 // User management
-router.get('/users', getUsers);
-router.put('/users/:id/block', toggleBlockUser);
+router.get('/students', getStudents);
+router.put('/students/:id/suspend', toggleSuspendStudent);
 
 // Sessions management
 router.get('/sessions', getActiveSessions);
 router.delete('/sessions/:id', cancelSession);
 
 // PC management additions
-router.delete('/pcs/:id', deletePC);
+router.delete('/computers/:id', deleteComputer);
 
 // Issue resolution
 router.get('/issues', getIssues);
