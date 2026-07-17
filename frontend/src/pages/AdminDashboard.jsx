@@ -231,7 +231,7 @@ const AdminDashboard = () => {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans flex flex-col pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans flex flex-col pb-12 transition-colors duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
                 
                 {/* Dashboard Header Banner */}
@@ -250,28 +250,28 @@ const AdminDashboard = () => {
                     <div className="flex justify-center py-6"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-                        <div className="bg-white rounded-2xl p-5 border shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-blue-100 transition-all duration-250">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-250">
                             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Monitor className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Total PCs</div>
                                 <div className="text-2xl font-bold text-gray-800">{stats?.pcs?.total}</div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-emerald-100 transition-all duration-250">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-900 transition-all duration-250">
                             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Available</div>
                                 <div className="text-2xl font-bold text-gray-800">{stats?.pcs?.available}</div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-indigo-100 transition-all duration-250">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900 transition-all duration-250">
                             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><Clock className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Active Sessions</div>
                                 <div className="text-2xl font-bold text-gray-800">{stats?.sessions?.active}</div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-amber-100 transition-all duration-250">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:-translate-y-1 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-900 transition-all duration-250">
                             <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><Users className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Pending Signups</div>
@@ -280,7 +280,7 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border shadow-sm flex items-center gap-4 col-span-2 md:col-span-1 hover:-translate-y-1 hover:shadow-md hover:border-rose-100 transition-all duration-250">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm flex items-center gap-4 col-span-2 md:col-span-1 hover:-translate-y-1 hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900 transition-all duration-250">
                             <div className="p-3 bg-rose-50 text-rose-600 rounded-xl"><AlertTriangle className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wide">Issues / Broken</div>
@@ -305,7 +305,7 @@ const AdminDashboard = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition duration-150 cursor-pointer whitespace-nowrap ${activeTab === tab.id ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-850 hover:bg-gray-100/50'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition duration-150 cursor-pointer whitespace-nowrap ${activeTab === tab.id ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-slate-800/50'}`}
                         >
                             {tab.icon} {tab.label}
                         </button>
@@ -313,13 +313,13 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Tab Content Panels */}
-                <div className="bg-white rounded-3xl border shadow-sm p-6 min-h-[400px]">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 min-h-[400px]">
 
                     {/* OVERVIEW PANEL */}
                     {activeTab === 'overview' && (
                         <div className="space-y-6">
                             <div>
-                                <h2 className="text-xl font-bold text-gray-800">IT Center Live Seating View</h2>
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">IT Center Live Seating View</h2>
                                 <p className="text-gray-500 text-sm mt-1">Live PC booking states. Click on a PC block to execute manual status overrides.</p>
                             </div>
                             

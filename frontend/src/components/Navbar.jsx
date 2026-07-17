@@ -1,9 +1,11 @@
 import { useAuthStore } from '../store/authStore';
-import { Monitor, LogOut, User, ShieldAlert, BookOpen } from 'lucide-react';
+import { useThemeStore } from '../store/themeStore';
+import { Monitor, LogOut, User, ShieldAlert, BookOpen, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
     const { user, logout } = useAuthStore();
+    const { isDark, toggleTheme } = useThemeStore();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -66,6 +68,24 @@ const Navbar = () => {
                                 </div>
                                 {getRoleBadge(user.role)}
                             </div>
+
+                            {/* Dark / Light Mode Toggle */}
+                            <button
+                                onClick={toggleTheme}
+                                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                                className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200/60 dark:border-slate-700/50 hover:border-amber-300 dark:hover:border-indigo-500 shadow-sm hover:shadow-amber-100 dark:hover:shadow-indigo-900/30 text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-indigo-400 transition-all duration-300 cursor-pointer overflow-hidden group"
+                            >
+                                <span className={`absolute transition-all duration-500 ease-in-out ${
+                                    isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'
+                                }`}>
+                                    <Moon className="w-4.5 h-4.5" />
+                                </span>
+                                <span className={`absolute transition-all duration-500 ease-in-out ${
+                                    !isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'
+                                }`}>
+                                    <Sun className="w-4.5 h-4.5" />
+                                </span>
+                            </button>
 
                             <button 
                                 onClick={handleLogout}

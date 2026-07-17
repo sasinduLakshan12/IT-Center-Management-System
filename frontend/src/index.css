@@ -1,7 +1,21 @@
 @import "tailwindcss";
 
+/* Tell Tailwind v4 to use class-based dark mode (matches .dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-gray-50 text-gray-900 antialiased transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-gray-100;
+  }
+
+  /* Smooth color transitions for all elements when switching theme */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
 }
