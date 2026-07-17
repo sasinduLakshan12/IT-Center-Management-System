@@ -30,6 +30,8 @@ app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/time-slots', require('./routes/timeSlotRoutes'));
 app.use('/api/sessions', require('./routes/sessionRoutes'));
 app.use('/api/waiting-list', require('./routes/waitingListRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 
 // Basic test route
