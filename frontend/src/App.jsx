@@ -17,6 +17,8 @@ import AdminComputers from './pages/admin/AdminComputers';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminTimeSlots from './pages/admin/AdminTimeSlots';
 import AdminReports from './pages/admin/AdminReports';
+import AdminAuditLogs from './pages/admin/AdminAuditLogs';
+import AdminSettings from './pages/admin/AdminSettings';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
@@ -47,6 +49,8 @@ function AppRoutes() {
       <Route path="/admin/bookings" element={<ProtectedRoute requiredRole="admin"><AdminBookings /></ProtectedRoute>} />
       <Route path="/admin/time-slots" element={<ProtectedRoute requiredRole="admin"><AdminTimeSlots /></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><AdminReports /></ProtectedRoute>} />
+      <Route path="/admin/audit-logs" element={<ProtectedRoute requiredRole="admin"><AdminAuditLogs /></ProtectedRoute>} />
+      <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
       <Route path="/admin/notifications" element={<ProtectedRoute requiredRole="admin"><Notifications /></ProtectedRoute>} />
 
       {/* Fallback */}
