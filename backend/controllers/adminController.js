@@ -14,7 +14,7 @@ const getStats = async (req, res) => {
         const availableComputers = await Computer.countDocuments({ status: 'Available' });
         const reservedComputers = await Computer.countDocuments({ status: 'Reserved' });
         const inUseComputers = await Computer.countDocuments({ status: 'In Use' });
-        const maintenanceComputers = await Computer.countDocuments({ status: { $in: ['Under Maintenance', 'Damaged', 'Out of Service'] } });
+        const maintenanceComputers = await Computer.countDocuments({ status: { $in: ['Maintenance', 'Decommissioned', 'Damaged', 'Out of Service'] } });
 
         const totalStudents = await Student.countDocuments({ status: 'Approved' });
         const pendingApprovals = await Student.countDocuments({ status: 'Pending Approval' });
@@ -264,7 +264,7 @@ const deleteComputer = async (req, res) => {
 // @access  Private/Admin
 const getIssues = async (req, res) => {
     try {
-        const issues = await Computer.find({ status: { $in: ['Damaged', 'Out of Service', 'Under Maintenance'] } });
+        const issues = await Computer.find({ status: { $in: ['Maintenance', 'Decommissioned', 'Damaged', 'Out of Service'] } });
         res.json(issues);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -43,24 +43,17 @@ const addComputer = async (req, res) => {
         ];
 
         // Check required fields
-        for (const field of ['pcId', 'pcName', 'assetNumber', 'serialNumber', 'location', 'roomNumber', 'ipAddress', 'macAddress', 'brand', 'model', 'processor', 'ram', 'storage', 'operatingSystem', 'purchaseDate', 'warrantyExpiryDate']) {
+        for (const field of ['pcId', 'pcName', 'location']) {
             if (!req.body[field]) {
                 return res.status(400).json({ message: `Field '${field}' is required.` });
             }
         }
 
         // Check if exists
-        const exists = await Computer.findOne({
-            $or: [
-                { pcId: req.body.pcId.toUpperCase() },
-                { assetNumber: req.body.assetNumber },
-                { serialNumber: req.body.serialNumber },
-                { macAddress: req.body.macAddress }
-            ]
-        });
+        const exists = await Computer.findOne({ pcId: req.body.pcId.toUpperCase() });
 
         if (exists) {
-            return res.status(400).json({ message: 'A computer with this ID, Asset Number, Serial Number, or MAC Address already exists.' });
+            return res.status(400).json({ message: 'A computer with this PC ID already exists.' });
         }
 
         // Generate QR code base64

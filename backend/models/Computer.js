@@ -15,14 +15,10 @@ const computerSchema = new mongoose.Schema({
     },
     assetNumber: {
         type: String,
-        required: true,
-        unique: true,
         trim: true
     },
     serialNumber: {
         type: String,
-        required: true,
-        unique: true,
         trim: true
     },
     location: {
@@ -32,48 +28,39 @@ const computerSchema = new mongoose.Schema({
     },
     roomNumber: {
         type: String,
-        required: true,
+        default: 'Main Lab',
         trim: true
     },
     ipAddress: {
         type: String,
-        required: true,
         trim: true
     },
     macAddress: {
         type: String,
-        required: true,
-        unique: true,
         trim: true
     },
     brand: {
         type: String,
-        required: true,
         trim: true
     },
     model: {
         type: String,
-        required: true,
         trim: true
     },
     processor: {
         type: String,
-        required: true,
         trim: true
     },
     ram: {
         type: String, // e.g. 16GB
-        required: true,
         trim: true
     },
     storage: {
         type: String, // e.g. 512GB SSD
-        required: true,
         trim: true
     },
     operatingSystem: {
         type: String,
-        required: true,
         trim: true
     },
     installedSoftware: {
@@ -81,12 +68,10 @@ const computerSchema = new mongoose.Schema({
         default: []
     },
     purchaseDate: {
-        type: Date,
-        required: true
+        type: Date
     },
     warrantyExpiryDate: {
-        type: Date,
-        required: true
+        type: Date
     },
     condition: {
         type: String,
@@ -95,7 +80,7 @@ const computerSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Available', 'Reserved', 'In Use', 'Under Maintenance', 'Damaged', 'Out of Service', 'Inactive'],
+        enum: ['Available', 'Reserved', 'InUse', 'Maintenance', 'Decommissioned', 'Damaged', 'Out of Service', 'Inactive'],
         default: 'Available'
     },
     lastMaintenanceDate: {

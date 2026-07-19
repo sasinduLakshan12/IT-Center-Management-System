@@ -17,7 +17,7 @@ const AdminComputers = () => {
   const [filter, setFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editPC, setEditPC] = useState(null);
-  const [form, setForm] = useState({ pcId: '', name: '', specs: '', location: '', status: 'Available' });
+  const [form, setForm] = useState({ pcId: '', pcName: '', specs: 'Standard: i5, 8GB RAM', location: 'Row A', status: 'Available' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,14 +35,14 @@ const AdminComputers = () => {
 
   const openAdd = () => {
     setEditPC(null);
-    setForm({ pcId: '', name: '', specs: '', location: '', status: 'Available' });
+    setForm({ pcId: '', pcName: '', specs: 'Standard: i5, 8GB RAM', location: 'Row A', status: 'Available' });
     setError('');
     setShowModal(true);
   };
 
   const openEdit = (pc) => {
     setEditPC(pc);
-    setForm({ pcId: pc.pcId, name: pc.name, specs: pc.specs || '', location: pc.location || '', status: pc.status });
+    setForm({ pcId: pc.pcId, pcName: pc.pcName, specs: pc.specs || 'Standard: i5, 8GB RAM', location: pc.location || 'Row A', status: pc.status });
     setError('');
     setShowModal(true);
   };
@@ -86,7 +86,7 @@ const AdminComputers = () => {
   };
 
   const filtered = computers.filter(c =>
-    search ? (c.pcId?.toLowerCase().includes(search.toLowerCase()) || c.name?.toLowerCase().includes(search.toLowerCase()) || c.location?.toLowerCase().includes(search.toLowerCase())) : true
+    search ? (c.pcId?.toLowerCase().includes(search.toLowerCase()) || c.pcName?.toLowerCase().includes(search.toLowerCase()) || c.location?.toLowerCase().includes(search.toLowerCase())) : true
   );
 
   return (
@@ -157,7 +157,7 @@ const AdminComputers = () => {
               </div>
 
               <p style={{ fontWeight: '700', fontSize: '1.05rem', marginBottom: '3px' }}>{pc.pcId}</p>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '4px' }}>{pc.name}</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '4px' }}>{pc.pcName}</p>
               {pc.location && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem', marginBottom: '4px' }}>📍 {pc.location}</p>}
               {pc.specs && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>🔧 {pc.specs}</p>}
 
@@ -201,12 +201,26 @@ const AdminComputers = () => {
             {error && <div style={{ background: 'rgba(255,75,75,0.15)', border: '1px solid rgba(255,75,75,0.4)', borderRadius: '8px', padding: '10px 14px', marginBottom: '1.2rem', color: '#ff8080', fontSize: '0.9rem' }}>{error}</div>}
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[['pcId', 'PC ID *', 'e.g. PC-01'], ['name', 'Display Name *', 'e.g. Lab Computer 01'], ['specs', 'Specs', 'e.g. Intel i5, 8GB RAM'], ['location', 'Location', 'e.g. Row A, Seat 1']].map(([key, label, ph]) => (
-                <div key={key}>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{label}</label>
-                  <input className="glass-input" placeholder={ph} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} required={key === 'pcId' || key === 'name'} id={`computer-${key}`} />
-                </div>
-              ))}
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>PC ID *</label>
+                <input className="glass-input" placeholder="e.g. PC-01" value={form.pcId} onChange={e => setForm({ ...form, pcId: e.target.value })} required id="computer-pcId" />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Display Name *</label>
+                <input className="glass-input" placeholder="e.g. Lab Computer 01" value={form.pcName} onChange={e => setForm({ ...form, pcName: e.target.value })} required id="computer-name" />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Specs</label>
+                <select className="glass-input" value={form.specs} onChange={e => setForm({ ...form, specs: e.target.value })} id="computer-specs">
+                  {['Standard: i5, 8GB RAM', 'High-End: i7, 16GB RAM', 'Design: i9, 32GB RAM, RTX 3060'].map(s => <option key={s} value={s} style={{ background: '#1a1a3a' }}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Location</label>
+                <select className="glass-input" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} id="computer-location">
+                  {['Row A', 'Row B', 'Row C', 'Row D', 'Row E', 'Row F', 'Row G', 'Row H'].map(s => <option key={s} value={s} style={{ background: '#1a1a3a' }}>{s}</option>)}
+                </select>
+              </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Status</label>
                 <select className="glass-input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} id="computer-status">

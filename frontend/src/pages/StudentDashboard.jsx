@@ -19,10 +19,10 @@ const StudentDashboard = () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const [pcsRes, bookingRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/pcs', config),
+                axios.get('http://localhost:5000/api/computers', config),
                 axios.get('http://localhost:5000/api/bookings/my-active', config)
             ]);
-            setPcs(pcsRes.data);
+            setPcs(pcsRes.data.data || pcsRes.data || []);
             setActiveBooking(bookingRes.data);
         } catch (error) {
             console.error(error);
@@ -95,24 +95,41 @@ const StudentDashboard = () => {
     };
 
     const getStatusColor = (status) => {
-        switch (status) {
+        const s = status?.toLowerCase();
+        switch (s) {
             case 'available': return 'bg-green-100 border-green-500 text-green-700 hover:bg-green-200 cursor-pointer';
-            case 'occupied': return 'bg-red-100 border-red-500 text-red-700 cursor-not-allowed opacity-75';
+            case 'occupied': 
+            case 'inuse': return 'bg-red-100 border-red-500 text-red-700 cursor-not-allowed opacity-75';
             case 'booked': return 'bg-yellow-100 border-yellow-500 text-yellow-700 cursor-not-allowed opacity-75';
-            case 'out-of-order': return 'bg-gray-100 border-gray-500 text-gray-700 cursor-not-allowed opacity-75';
+            case 'out-of-order': 
+            case 'maintenance': 
+            case 'decommissioned': return 'bg-gray-100 border-gray-500 text-gray-700 cursor-not-allowed opacity-75';
             default: return 'bg-gray-100 border-gray-300 text-gray-500';
         }
     };
 
     const getStatusIcon = (status) => {
-        switch (status) {
+        const s = status?.toLowerCase();
+        switch (s) {
             case 'available': return <CheckCircle className="w-5 h-5 mb-1" />;
-            case 'occupied': return <Monitor className="w-5 h-5 mb-1" />;
+            case 'occupied': 
+            case 'inuse': return <Monitor className="w-5 h-5 mb-1" />;
             case 'booked': return <Clock className="w-5 h-5 mb-1" />;
-            case 'out-of-order': return <AlertTriangle className="w-5 h-5 mb-1" />;
+            case 'out-of-order': 
+            case 'maintenance':
+            case 'decommissioned': return <AlertTriangle className="w-5 h-5 mb-1" />;
             default: return <Monitor className="w-5 h-5 mb-1" />;
         }
     };
+
+    const groupedPcs = pcs.reduce((acc, pc) => {
+        const loc = pc.location || 'Unknown';
+        if (!acc[loc]) acc[loc] = [];
+        acc[loc].push(pc);
+        return acc;
+    }, {});
+    
+    const sortedLocations = Object.keys(groupedPcs).sort();
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans relative transition-colors duration-300">
@@ -202,15 +219,25 @@ const StudentDashboard = () => {
                             <p>No PCs have been added by the Admin yet.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4">
-                            {pcs.map((pc) => (
-                                <div 
-                                    key={pc._id}
-                                    onClick={() => pc.status === 'available' && setSelectedPc(pc)}
-                                    className={`relative flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${getStatusColor(pc.status)} ${pc.status === 'available' ? 'hover:-translate-y-1 hover:shadow-md' : ''}`}
-                                >
-                                    {getStatusIcon(pc.status)}
-                                    <span className="font-bold text-sm">{pc.pcId}</span>
+                        <div className="space-y-8">
+                            {sortedLocations.map(location => (
+                                <div key={location} className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-gray-100 dark:border-slate-700/50">
+                                    <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+                                        <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                        {location}
+                                    </h3>
+                                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4">
+                                        {groupedPcs[location].map((pc) => (
+                                            <div 
+                                                key={pc._id}
+                                                onClick={() => pc.status?.toLowerCase() === 'available' && setSelectedPc(pc)}
+                                                className={`relative flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${getStatusColor(pc.status)} ${pc.status?.toLowerCase() === 'available' ? 'hover:-translate-y-1 hover:shadow-md' : ''}`}
+                                            >
+                                                {getStatusIcon(pc.status)}
+                                                <span className="font-bold text-sm">{pc.pcId}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>

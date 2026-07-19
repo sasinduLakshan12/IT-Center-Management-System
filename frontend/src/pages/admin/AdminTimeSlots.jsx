@@ -8,7 +8,7 @@ const AdminTimeSlots = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editSlot, setEditSlot] = useState(null);
-  const [form, setForm] = useState({ slotName: '', startTime: '', endTime: '', maxBookings: 20, isActive: true });
+  const [form, setForm] = useState({ slotName: '', startTime: '', endTime: '', isActive: true });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,14 +25,14 @@ const AdminTimeSlots = () => {
 
   const openAdd = () => {
     setEditSlot(null);
-    setForm({ slotName: '', startTime: '', endTime: '', maxBookings: 20, isActive: true });
+    setForm({ slotName: '', startTime: '', endTime: '', isActive: true });
     setError('');
     setShowModal(true);
   };
 
   const openEdit = (slot) => {
     setEditSlot(slot);
-    setForm({ slotName: slot.slotName, startTime: slot.startTime, endTime: slot.endTime, maxBookings: slot.maxBookings || 20, isActive: slot.isActive !== false });
+    setForm({ slotName: slot.slotName, startTime: slot.startTime, endTime: slot.endTime, isActive: slot.isActive !== false });
     setError('');
     setShowModal(true);
   };
@@ -42,8 +42,14 @@ const AdminTimeSlots = () => {
     setSaving(true);
     setError('');
     try {
-      if (editSlot) await API.put(`/time-slots/${editSlot._id}`, form);
-      else await API.post('/time-slots', form);
+      const [sh, sm] = form.startTime.split(':').map(Number);
+      const [eh, em] = form.endTime.split(':').map(Number);
+      const duration = (eh * 60 + em) - (sh * 60 + sm);
+      
+      const payload = { ...form, duration };
+
+      if (editSlot) await API.put(`/time-slots/${editSlot._id}`, payload);
+      else await API.post('/time-slots', payload);
       setShowModal(false);
       fetchSlots();
     } catch (err) {
@@ -113,12 +119,7 @@ const AdminTimeSlots = () => {
                 </span>
               </div>
 
-              <div style={{ padding: '10px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '1.2rem', fontWeight: '700', color: dayColors[idx % dayColors.length] }}>{slot.maxBookings || 20}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Max Bookings</p>
-                </div>
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.08)' }} />
+              <div style={{ padding: '10px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '1.2rem', fontWeight: '700' }}>
                     {(() => {
@@ -161,7 +162,10 @@ const AdminTimeSlots = () => {
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Slot Name *</label>
-                <input className="glass-input" placeholder="e.g. Morning Session" value={form.slotName} onChange={e => setForm({ ...form, slotName: e.target.value })} required id="slot-name" />
+                <select className="glass-input" value={form.slotName} onChange={e => setForm({ ...form, slotName: e.target.value })} required id="slot-name">
+                  <option value="" disabled style={{ background: '#1a1a3a' }}>Select Session...</option>
+                  {['Morning Session', 'Afternoon Session', 'Evening Session', 'Night Session', 'Weekend Session'].map(s => <option key={s} value={s} style={{ background: '#1a1a3a' }}>{s}</option>)}
+                </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
@@ -173,10 +177,7 @@ const AdminTimeSlots = () => {
                   <input type="time" className="glass-input" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} required id="slot-end" style={{ colorScheme: 'dark' }} />
                 </div>
               </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Max Bookings</label>
-                <input type="number" min="1" className="glass-input" value={form.maxBookings} onChange={e => setForm({ ...form, maxBookings: parseInt(e.target.value) })} id="slot-max" />
-              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Active</label>
                 <button type="button" onClick={() => setForm({ ...form, isActive: !form.isActive })} style={{
