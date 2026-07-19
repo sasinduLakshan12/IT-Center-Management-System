@@ -161,6 +161,40 @@ const deleteComputer = async (req, res) => {
     }
 };
 
+// Delete all computers
+const deleteAllComputers = async (req, res) => {
+    try {
+        // Check if there are active bookings in the entire system
+        const activeBookings = await Booking.findOne({
+            status: { $in: ['Confirmed', 'Active', 'Pending'] }
+        });
+
+        if (activeBookings) {
+            return res.status(400).json({ message: 'Cannot delete all computers because there are active or future bookings in the system.' });
+        }
+
+        const count = await Computer.countDocuments();
+        if (count === 0) {
+            return res.status(400).json({ message: 'No computers to delete.' });
+        }
+
+        await Computer.deleteMany({});
+
+        await logAction({
+            userId: req.user._id,
+            operatorName: req.user.name,
+            role: 'Admin',
+            action: 'Delete All Computers',
+            module: 'Asset',
+            description: `Admin deleted all ${count} computers from the system.`
+        });
+
+        res.json({ success: true, message: `Successfully deleted all ${count} computers.` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Export to CSV
 const exportComputers = async (req, res) => {
     try {
@@ -341,6 +375,7 @@ module.exports = {
     addComputer,
     updateComputer,
     deleteComputer,
+    deleteAllComputers,
     exportComputers,
     importComputers,
     bulkGenerateComputers

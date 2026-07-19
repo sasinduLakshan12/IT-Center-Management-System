@@ -7,6 +7,7 @@ const {
     addComputer,
     updateComputer,
     deleteComputer,
+    deleteAllComputers,
     exportComputers,
     importComputers,
     bulkGenerateComputers
@@ -14,7 +15,8 @@ const {
 
 router.route('/')
     .get(protect, getComputers)
-    .post(protect, adminOnly, addComputer);
+    .post(protect, adminOnly, addComputer)
+    .delete(protect, adminOnly, deleteAllComputers);
 
 router.route('/bulk-generate')
     .post(protect, adminOnly, bulkGenerateComputers);

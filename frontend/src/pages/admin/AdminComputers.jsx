@@ -93,9 +93,23 @@ const AdminComputers = () => {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!window.confirm('WARNING: Are you sure you want to delete ALL computers from the system? This action is irreversible!')) return;
+    setSaving(true);
+    try {
+      await API.delete('/computers');
+      fetchComputers();
+      alert('All computers have been successfully deleted.');
+    } catch (e) {
+      alert(e.response?.data?.message || 'Failed to delete all computers.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleStatusToggle = async (pc, newStatus) => {
     try {
-      await API.put(`/computers/${pc._id}/status`, { status: newStatus });
+      await API.put(`/computers/${pc._id}`, { status: newStatus });
       fetchComputers();
     } catch (e) {
       alert('Failed to update status.');
@@ -158,60 +172,75 @@ const AdminComputers = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Loading computers...</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
-          {filtered.map(pc => (
-            <div key={pc._id} className="glass-panel" style={{ padding: '1.25rem', transition: 'transform 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-            >
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{
-                  width: '42px', height: '42px', borderRadius: '10px',
-                  background: `${statusColors[pc.status]}18`, border: `1px solid ${statusColors[pc.status]}40`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: statusColors[pc.status]
-                }}>
-                  <Monitor size={20} />
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
+            {filtered.map(pc => (
+              <div key={pc._id} className="glass-panel" style={{ padding: '1.25rem', transition: 'transform 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{
+                    width: '42px', height: '42px', borderRadius: '10px',
+                    background: `${statusColors[pc.status]}18`, border: `1px solid ${statusColors[pc.status]}40`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: statusColors[pc.status]
+                  }}>
+                    <Monitor size={20} />
+                  </div>
+                  <span style={{
+                    padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600',
+                    background: `${statusColors[pc.status]}18`, color: statusColors[pc.status],
+                    border: `1px solid ${statusColors[pc.status]}40`
+                  }}>
+                    {pc.status}
+                  </span>
                 </div>
-                <span style={{
-                  padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600',
-                  background: `${statusColors[pc.status]}18`, color: statusColors[pc.status],
-                  border: `1px solid ${statusColors[pc.status]}40`
-                }}>
-                  {pc.status}
-                </span>
-              </div>
 
-              <p style={{ fontWeight: '700', fontSize: '1.05rem', marginBottom: '3px' }}>{pc.pcId}</p>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '4px' }}>{pc.pcName}</p>
-              {pc.location && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem', marginBottom: '4px' }}>📍 {pc.location}</p>}
-              {pc.specs && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>🔧 {pc.specs}</p>}
+                <p style={{ fontWeight: '700', fontSize: '1.05rem', marginBottom: '3px' }}>{pc.pcId}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '4px' }}>{pc.pcName}</p>
+                {pc.location && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem', marginBottom: '4px' }}>📍 {pc.location}</p>}
+                {pc.specs && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>🔧 {pc.specs}</p>}
 
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: '8px', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                {pc.status === 'Available' && (
-                  <button onClick={() => handleStatusToggle(pc, 'Maintenance')} title="Set to Maintenance"
-                    style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'rgba(255,152,0,0.12)', border: '1px solid rgba(255,152,0,0.3)', color: '#ff9800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.78rem' }}>
-                    <Wrench size={14} /> Maintenance
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  {pc.status === 'Available' && (
+                    <button onClick={() => handleStatusToggle(pc, 'Maintenance')} title="Send to Maintenance"
+                      style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '500', transition: 'all 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,152,0,0.15)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                      <Wrench size={14} /> Send to Maintenance
+                    </button>
+                  )}
+                  {pc.status === 'Maintenance' && (
+                    <button onClick={() => handleStatusToggle(pc, 'Available')} title="Mark as Available"
+                      style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '500', transition: 'all 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,230,118,0.15)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                      <Check size={14} /> Mark as Available
+                    </button>
+                  )}
+                  <button onClick={() => openEdit(pc)} title="Edit"
+                    style={{ padding: '7px 12px', borderRadius: '8px', background: 'rgba(123,97,255,0.12)', border: '1px solid rgba(123,97,255,0.3)', color: '#7b61ff', cursor: 'pointer' }}>
+                    <Edit2 size={15} />
                   </button>
-                )}
-                {pc.status === 'Maintenance' && (
-                  <button onClick={() => handleStatusToggle(pc, 'Available')} title="Mark Available"
-                    style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'rgba(0,230,118,0.12)', border: '1px solid rgba(0,230,118,0.3)', color: '#00e676', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.78rem' }}>
-                    <Check size={14} /> Available
+                  <button onClick={() => handleDelete(pc._id)} title="Delete"
+                    style={{ padding: '7px 12px', borderRadius: '8px', background: 'rgba(255,75,75,0.12)', border: '1px solid rgba(255,75,75,0.3)', color: '#ff6b6b', cursor: 'pointer' }}>
+                    <Trash2 size={15} />
                   </button>
-                )}
-                <button onClick={() => openEdit(pc)} title="Edit"
-                  style={{ padding: '7px 12px', borderRadius: '8px', background: 'rgba(123,97,255,0.12)', border: '1px solid rgba(123,97,255,0.3)', color: '#7b61ff', cursor: 'pointer' }}>
-                  <Edit2 size={15} />
-                </button>
-                <button onClick={() => handleDelete(pc._id)} title="Delete"
-                  style={{ padding: '7px 12px', borderRadius: '8px', background: 'rgba(255,75,75,0.12)', border: '1px solid rgba(255,75,75,0.3)', color: '#ff6b6b', cursor: 'pointer' }}>
-                  <Trash2 size={15} />
-                </button>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Delete All Section */}
+          {computers.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem' }}>
+              <button onClick={handleDeleteAll} disabled={saving} className="glass-button" style={{ background: 'rgba(255,75,75,0.15)', border: '1px solid rgba(255,75,75,0.4)', color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Trash2 size={16} /> {saving ? 'Deleting...' : 'Delete All Computers'}
+              </button>
             </div>
-          ))}
+          )}
         </div>
       )}
 
@@ -229,7 +258,7 @@ const AdminComputers = () => {
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>PC ID *</label>
-                <select className="glass-input" value={form.pcId} onChange={e => setForm({ ...form, pcId: e.target.value })} required id="computer-pcId" style={{ width: '100%' }}>
+                <select className="glass-input" value={form.pcId} onChange={e => setForm({ ...form, pcId: e.target.value })} required id="computer-pcId" style={{ width: '100%', opacity: editPC ? 0.7 : 1 }} disabled={!!editPC}>
                   <option value="" disabled>Select PC ID...</option>
                   {Array.from({ length: 50 }, (_, i) => `ITC${(i + 1).toString().padStart(2, '0')}`).map(id => (
                     <option key={id} value={id} style={{ background: '#1a1a3a' }}>{id}</option>
