@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Monitor, Clock, Calendar, X, QrCode, Search, Filter } from 'lucide-react';
+import { Monitor, Clock, Calendar, X, QrCode, Search, Filter, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import API from '../../utils/api';
 
@@ -40,6 +40,19 @@ const MyBookings = () => {
       fetchBookings();
     } catch (e) {
       alert(e.response?.data?.message || 'Could not cancel booking.');
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to permanently delete this booking record?')) return;
+    setCancelling(id);
+    try {
+      await API.delete(`/bookings/${id}`);
+      fetchBookings();
+    } catch (e) {
+      alert(e.response?.data?.message || 'Could not delete booking.');
     } finally {
       setCancelling(null);
     }
@@ -161,6 +174,23 @@ const MyBookings = () => {
                     }}
                   >
                     {cancelling === b._id ? '...' : <X size={16} />}
+                  </button>
+                )}
+                {['Cancelled', 'Completed', 'Missed', 'Rejected'].includes(b.status) && (
+                  <button
+                    onClick={() => handleDelete(b._id)}
+                    disabled={cancelling === b._id}
+                    title="Delete record"
+                    style={{
+                      width: '34px', height: '34px', borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                      color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#ff6b6b'; e.currentTarget.style.borderColor = 'rgba(255,75,75,0.3)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                  >
+                    {cancelling === b._id ? '...' : <Trash2 size={16} />}
                   </button>
                 )}
               </div>

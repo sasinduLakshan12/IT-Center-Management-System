@@ -6,7 +6,9 @@ const {
     cancelBooking,
     getMyBookings,
     getAllBookings,
-    checkAvailability
+    checkAvailability,
+    deleteBooking,
+    checkInBooking
 } = require('../controllers/bookingController');
 
 // All routes require authentication
@@ -19,10 +21,12 @@ router.get('/availability', protect, checkAvailability);
 router.post('/', protect, createBooking);
 router.get('/my-bookings', getMyBookings);
 
-// Shared Routes (Student or Admin can cancel)
+// Shared Routes (Student or Admin can cancel/delete)
 router.put('/:id/cancel', cancelBooking);
+router.delete('/:id', deleteBooking);
 
 // Admin Routes
+router.put('/check-in', adminOnly, checkInBooking);
 router.get('/', adminOnly, getAllBookings);
 
 module.exports = router;

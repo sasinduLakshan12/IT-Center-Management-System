@@ -400,10 +400,124 @@ const getAllBookings = async (req, res) => {
     }
 };
 
+// @desc    Delete a booking permanently
+// @route   DELETE /api/bookings/:id
+// @access  Private (Student or Admin)
+const deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found.' });
+        }
+
+        // Only allow student to delete their own, or admin to delete any
+        if (req.user.role !== 'admin' && booking.student.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized to delete this booking.' });
+        }
+
+        // Only allow deleting cancelled, completed, missed, or rejected bookings
+        if (!['Cancelled', 'Completed', 'Missed', 'Rejected'].includes(booking.status)) {
+            return res.status(400).json({ message: `Cannot delete a booking that is currently ${booking.status}. Cancel it first.` });
+        }
+
+        await Booking.findByIdAndDelete(req.params.id);
+
+        await logAction({
+            userId: req.user._id,
+            operatorName: req.user.name,
+            role: req.user.role === 'admin' ? 'Admin' : 'Student',
+            action: 'Delete Booking',
+            module: 'Booking',
+            recordId: booking._id.toString(),
+            description: `Booking ${booking.referenceNumber} was permanently deleted.`
+        });
+
+        res.json({ success: true, message: 'Booking deleted permanently.' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Check-in a student via QR Code Scan
+// @route   PUT /api/bookings/check-in
+// @access  Private/Admin
+const checkInBooking = async (req, res) => {
+    try {
+        const { referenceNumber } = req.body;
+
+        if (!referenceNumber) {
+            return res.status(400).json({ message: 'Reference number is required.' });
+        }
+
+        const booking = await Booking.findOne({ referenceNumber })
+            .populate('student', 'name studentId')
+            .populate('assignedComputer', 'pcId location status');
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found for this QR code.' });
+        }
+
+        // Verify booking status
+        if (booking.status === 'Active') {
+            return res.status(400).json({ message: 'Student is already checked in.' });
+        }
+
+        if (booking.status !== 'Confirmed') {
+            return res.status(400).json({ message: `Cannot check-in. Booking status is ${booking.status}.` });
+        }
+
+        // Verify booking date is today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const bookingDate = new Date(booking.bookingDate);
+        bookingDate.setHours(0, 0, 0, 0);
+
+        if (bookingDate.getTime() !== today.getTime()) {
+            return res.status(400).json({ message: 'This booking is not valid for today.' });
+        }
+
+        // Proceed to check-in
+        booking.status = 'Active';
+        booking.checkInTime = new Date();
+        await booking.save();
+
+        // Update Computer status to 'InUse'
+        if (booking.assignedComputer) {
+            await Computer.findByIdAndUpdate(booking.assignedComputer._id, { status: 'InUse' });
+        }
+
+        await logAction({
+            userId: req.user._id,
+            operatorName: req.user.name,
+            role: 'Admin',
+            action: 'Check In',
+            module: 'Booking',
+            recordId: booking._id.toString(),
+            description: `Student ${booking.student.name} checked in to PC ${booking.assignedComputer.pcId} via QR scan.`
+        });
+
+        res.json({ 
+            success: true, 
+            message: 'Check-in successful!',
+            data: {
+                studentName: booking.student.name,
+                studentId: booking.student.studentId,
+                pcId: booking.assignedComputer.pcId
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     checkAvailability,
     createBooking,
     cancelBooking,
+    deleteBooking,
+    checkInBooking,
     getMyBookings,
     getAllBookings,
     autoAssignFromWaitingList
