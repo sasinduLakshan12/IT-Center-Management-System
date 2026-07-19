@@ -5,14 +5,18 @@ const {
     createBooking,
     cancelBooking,
     getMyBookings,
-    getAllBookings
+    getAllBookings,
+    checkAvailability
 } = require('../controllers/bookingController');
 
 // All routes require authentication
 router.use(protect);
 
-// Student Routes
-router.post('/', createBooking);
+// Get availability
+router.get('/availability', protect, checkAvailability);
+
+// Book a computer
+router.post('/', protect, createBooking);
 router.get('/my-bookings', getMyBookings);
 
 // Shared Routes (Student or Admin can cancel)

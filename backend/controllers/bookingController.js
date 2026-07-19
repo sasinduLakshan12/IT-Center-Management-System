@@ -76,12 +76,75 @@ const autoAssignFromWaitingList = async (dateObj, timeSlotId) => {
     }
 };
 
+// @desc    Check availability for a date and time slot (returns grid data)
+// @route   GET /api/bookings/availability
+// @access  Private/Student
+const checkAvailability = async (req, res) => {
+    try {
+        const { date, timeSlotId } = req.query;
+        if (!date || !timeSlotId) {
+            return res.status(400).json({ message: 'Date and Time Slot are required.' });
+        }
+
+        const dateObj = new Date(date);
+        dateObj.setHours(0, 0, 0, 0);
+
+        // Fetch all computers
+        const computers = await Computer.find({}).select('pcId location status');
+
+        // Fetch bookings for this slot
+        const bookings = await Booking.find({
+            bookingDate: dateObj,
+            timeSlot: timeSlotId,
+            status: { $in: ['Confirmed', 'Active', 'Pending'] }
+        }).select('assignedComputer');
+
+        const bookedPcIds = bookings.map(b => b.assignedComputer.toString());
+
+        // Construct grid response
+        const layout = {};
+        let availableCount = 0;
+
+        computers.forEach(pc => {
+            let currentStatus = 'Available';
+            
+            if (pc.status === 'Maintenance' || pc.status === 'Damaged' || pc.status === 'Out of Service' || pc.status === 'Inactive' || pc.status === 'Decommissioned') {
+                currentStatus = 'Maintenance';
+            } else if (bookedPcIds.includes(pc._id.toString()) || pc.status === 'Reserved' || pc.status === 'InUse') {
+                currentStatus = 'Booked';
+            } else {
+                currentStatus = 'Available';
+                availableCount++;
+            }
+
+            const loc = pc.location || 'Unassigned';
+            if (!layout[loc]) layout[loc] = [];
+            layout[loc].push({
+                _id: pc._id,
+                pcId: pc.pcId,
+                status: currentStatus
+            });
+        });
+
+        const waitingListSize = await WaitingList.countDocuments({
+            bookingDate: dateObj,
+            timeSlot: timeSlotId,
+            status: 'Waiting'
+        });
+
+        res.json({ success: true, data: { layout, availableComputers: availableCount, waitingListSize } });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Book a computer
 // @route   POST /api/bookings
 // @access  Private/Student
 const createBooking = async (req, res) => {
     try {
-        const { bookingDate, timeSlotId, purpose } = req.body;
+        const { bookingDate, timeSlotId, purpose, computerId } = req.body;
         const studentId = req.user._id;
 
         if (!bookingDate || !timeSlotId || !purpose) {
@@ -146,17 +209,41 @@ const createBooking = async (req, res) => {
              return res.status(400).json({ message: 'You are already on the waiting list for this time slot on this date.' });
         }
 
-        // 4. Automatic Computer Allocation
-        const allAvailablePcs = await Computer.find({ status: 'Available' });
+        // 4. Automatic Computer Allocation or Manual Selection
+        let freePc = null;
 
-        const conflictingBookings = await Booking.find({
-            bookingDate: dateObj,
-            timeSlot: timeSlotId,
-            status: { $in: ['Confirmed', 'Active', 'Pending'] }
-        }).select('assignedComputer');
+        if (computerId) {
+            // Manual selection verification
+            const selectedPc = await Computer.findById(computerId);
+            if (!selectedPc) return res.status(400).json({ message: 'Selected computer not found.' });
+            
+            if (selectedPc.status === 'Maintenance' || selectedPc.status === 'Damaged' || selectedPc.status === 'Out of Service' || selectedPc.status === 'Inactive' || selectedPc.status === 'Decommissioned') {
+                return res.status(400).json({ message: 'Selected computer is currently unavailable.' });
+            }
 
-        const conflictingPcIds = conflictingBookings.map(b => b.assignedComputer.toString());
-        const freePc = allAvailablePcs.find(pc => !conflictingPcIds.includes(pc._id.toString()));
+            const isBooked = await Booking.findOne({
+                bookingDate: dateObj,
+                timeSlot: timeSlotId,
+                assignedComputer: computerId,
+                status: { $in: ['Confirmed', 'Active', 'Pending'] }
+            });
+
+            if (isBooked) {
+                return res.status(400).json({ message: 'Selected computer is already booked for this time slot.' });
+            }
+
+            freePc = selectedPc;
+        } else {
+            // Auto allocation (fallback if no computerId provided)
+            const allAvailablePcs = await Computer.find({ status: 'Available' });
+            const conflictingBookings = await Booking.find({
+                bookingDate: dateObj,
+                timeSlot: timeSlotId,
+                status: { $in: ['Confirmed', 'Active', 'Pending'] }
+            }).select('assignedComputer');
+            const conflictingPcIds = conflictingBookings.map(b => b.assignedComputer.toString());
+            freePc = allAvailablePcs.find(pc => !conflictingPcIds.includes(pc._id.toString()));
+        }
 
         if (!freePc) {
             // NO PC AVAILABLE -> Add to Waiting List
@@ -314,6 +401,7 @@ const getAllBookings = async (req, res) => {
 };
 
 module.exports = {
+    checkAvailability,
     createBooking,
     cancelBooking,
     getMyBookings,

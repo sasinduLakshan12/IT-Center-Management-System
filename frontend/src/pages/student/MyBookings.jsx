@@ -36,7 +36,7 @@ const MyBookings = () => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
     setCancelling(id);
     try {
-      await API.delete(`/bookings/${id}`);
+      await API.put(`/bookings/${id}/cancel`, { reason: 'Cancelled by student' });
       fetchBookings();
     } catch (e) {
       alert(e.response?.data?.message || 'Could not cancel booking.');
