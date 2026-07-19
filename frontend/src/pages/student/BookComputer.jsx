@@ -7,6 +7,7 @@ const BookComputer = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [availability, setAvailability] = useState(null);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -47,15 +48,16 @@ const BookComputer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedDate || !selectedSlot) return;
+    if (!selectedDate || !selectedSlot || !purpose) return;
     setLoading(true);
     setError('');
     setSuccess(null);
     try {
-      const { data } = await API.post('/bookings', { bookingDate: selectedDate, timeSlotId: selectedSlot });
+      const { data } = await API.post('/bookings', { bookingDate: selectedDate, timeSlotId: selectedSlot, purpose });
       setSuccess(data);
       setSelectedDate('');
       setSelectedSlot('');
+      setPurpose('');
       setAvailability(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed. Please try again.');
@@ -155,6 +157,32 @@ const BookComputer = () => {
               </div>
             </div>
 
+            {/* Purpose Input */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.6rem', fontSize: '0.9rem', fontWeight: '500', color: 'var(--text-secondary)' }}>
+                <AlertCircle size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                Purpose of Booking
+              </label>
+              <select
+                className="glass-input"
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value)}
+                required
+                style={{ width: '100%' }}
+              >
+                <option value="" disabled>Select a purpose...</option>
+                <option value="Assignment work">Assignment work</option>
+                <option value="Programming practice">Programming practice</option>
+                <option value="Research">Research</option>
+                <option value="Project work">Project work</option>
+                <option value="Online examination">Online examination</option>
+                <option value="Internet access">Internet access</option>
+                <option value="Learning activities">Learning activities</option>
+                <option value="Document preparation">Document preparation</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
             {/* Availability Check */}
             {checking && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -213,8 +241,8 @@ const BookComputer = () => {
               type="submit"
               className="glass-button"
               id="booking-submit"
-              disabled={loading || !selectedDate || !selectedSlot}
-              style={{ padding: '14px', fontSize: '1rem', opacity: (loading || !selectedDate || !selectedSlot) ? 0.5 : 1 }}
+              disabled={loading || !selectedDate || !selectedSlot || !purpose}
+              style={{ padding: '14px', fontSize: '1rem', opacity: (loading || !selectedDate || !selectedSlot || !purpose) ? 0.5 : 1 }}
             >
               {loading ? 'Processing...' : availability?.availableComputers === 0 ? 'Join Waiting List' : 'Confirm Booking'}
             </button>
