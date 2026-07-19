@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Monitor, LayoutDashboard, Calendar, Clock, ListOrdered,
   Bell, LogOut, ChevronLeft, ChevronRight, Users,
-  Settings, BarChart2, Computer, ClipboardList
+  Settings, BarChart2, Computer, ClipboardList, QrCode
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,6 +23,7 @@ const Sidebar = () => {
 
   const adminLinks = [
     { to: '/admin/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+    { to: '/admin/scanner', icon: <QrCode size={20} />, label: 'QR Scanner' },
     { to: '/admin/computers', icon: <Monitor size={20} />, label: 'Computers' },
     { to: '/admin/bookings', icon: <Calendar size={20} />, label: 'All Bookings' },
     { to: '/admin/time-slots', icon: <Clock size={20} />, label: 'Time Slots' },

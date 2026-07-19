@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Monitor, Clock, Calendar, X, QrCode, Search, Filter, Trash2 } from 'lucide-react';
+import { Monitor, Clock, Calendar, X, QrCode, Search, Filter, Trash2, Download } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import API from '../../utils/api';
 
@@ -17,6 +17,17 @@ const MyBookings = () => {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [cancelling, setCancelling] = useState(null);
+  const [selectedQR, setSelectedQR] = useState(null); // { qrCode: string, pcId: string, reference: string }
+
+  const downloadQRCode = () => {
+    if (!selectedQR) return;
+    const link = document.createElement('a');
+    link.href = selectedQR.qrCode;
+    link.download = `IT_Center_QR_${selectedQR.reference}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -161,6 +172,25 @@ const MyBookings = () => {
                 }}>
                   {b.status}
                 </span>
+
+                {/* Show QR Button */}
+                {(b.status === 'Confirmed' || b.status === 'Active') && b.qrCode && (
+                  <button
+                    onClick={() => setSelectedQR({ qrCode: b.qrCode, pcId: b.assignedComputer?.pcId, reference: b.referenceNumber })}
+                    title="View QR Code"
+                    style={{
+                      width: '34px', height: '34px', borderRadius: '8px',
+                      background: 'rgba(123, 97, 255, 0.15)', border: '1px solid rgba(123, 97, 255, 0.3)',
+                      color: 'var(--accent-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(123, 97, 255, 0.25)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(123, 97, 255, 0.15)' }}
+                  >
+                    <QrCode size={16} />
+                  </button>
+                )}
+
                 {(b.status === 'Confirmed') && (
                   <button
                     onClick={() => handleCancel(b._id)}
@@ -198,6 +228,59 @@ const MyBookings = () => {
           ))
         )}
       </div>
+
+      {/* QR Modal */}
+      {selectedQR && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }} onClick={() => setSelectedQR(null)}>
+          <div style={{
+            background: 'var(--bg-card)', padding: '2.5rem', borderRadius: '20px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            maxWidth: '350px', width: '90%'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '0.2rem' }}>Scan to Enter</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Show this QR code at the IT Center</p>
+            </div>
+            
+            <div style={{ background: '#fff', padding: '1rem', borderRadius: '12px' }}>
+              <img src={selectedQR.qrCode} alt="Booking QR Code" style={{ width: '200px', height: '200px' }} />
+            </div>
+
+            <div style={{ textAlign: 'center', width: '100%' }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--accent-color)' }}>PC {selectedQR.pcId}</div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>REF: {selectedQR.reference}</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+              <button 
+                onClick={downloadQRCode}
+                style={{ 
+                  flex: 1, padding: '0.8rem', borderRadius: '10px', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
+                  cursor: 'pointer'
+                }}
+              >
+                <Download size={18} /> Download
+              </button>
+              
+              <button 
+                onClick={() => setSelectedQR(null)}
+                className="btn-primary" 
+                style={{ flex: 1, padding: '0.8rem', borderRadius: '10px' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

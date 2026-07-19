@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Bell, CheckCheck, BellOff } from 'lucide-react';
+import { Bell, CheckCheck, BellOff, Trash2 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import API from '../utils/api';
 
@@ -41,6 +41,21 @@ const Notifications = () => {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (e) { console.error(e); }
+  };
+
+  const handleDelete = async (e, id) => {
+    e.stopPropagation(); // prevent triggering handleMarkRead
+    if (!window.confirm('Are you sure you want to delete this notification?')) return;
+    try {
+      await API.delete(`/notifications/${id}`);
+      setNotifications(prev => {
+        const deleted = prev.find(n => n._id === id);
+        if (deleted && !deleted.isRead) {
+            setUnreadCount(count => Math.max(0, count - 1));
+        }
+        return prev.filter(n => n._id !== id);
+      });
+    } catch (err) { console.error(err); }
   };
 
   const timeAgo = (dateStr) => {
@@ -110,7 +125,22 @@ const Notifications = () => {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '4px' }}>
                     <p style={{ fontWeight: n.isRead ? '400' : '600', fontSize: '0.95rem' }}>{n.title}</p>
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap', flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap', flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
+                        <button 
+                            onClick={(e) => handleDelete(e, n._id)}
+                            style={{ 
+                                background: 'transparent', border: 'none', color: 'var(--text-secondary)', 
+                                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                padding: '4px'
+                            }}
+                            title="Delete notification"
+                            onMouseEnter={e => e.currentTarget.style.color = '#ff6b6b'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
                   </div>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{n.message}</p>
                   <div style={{ marginTop: '6px', display: 'flex', gap: '8px', alignItems: 'center' }}>

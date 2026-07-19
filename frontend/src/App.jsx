@@ -19,6 +19,7 @@ import AdminTimeSlots from './pages/admin/AdminTimeSlots';
 import AdminReports from './pages/admin/AdminReports';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
 import AdminSettings from './pages/admin/AdminSettings';
+import QRScanner from './pages/admin/QRScanner';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
@@ -44,6 +45,7 @@ function AppRoutes() {
 
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/scanner" element={<ProtectedRoute requiredRole="admin"><QRScanner /></ProtectedRoute>} />
       <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><AdminStudents /></ProtectedRoute>} />
       <Route path="/admin/computers" element={<ProtectedRoute requiredRole="admin"><AdminComputers /></ProtectedRoute>} />
       <Route path="/admin/bookings" element={<ProtectedRoute requiredRole="admin"><AdminBookings /></ProtectedRoute>} />

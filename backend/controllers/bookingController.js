@@ -62,6 +62,15 @@ const autoAssignFromWaitingList = async (dateObj, timeSlotId) => {
         nextInLine.status = 'Confirmed';
         await nextInLine.save();
 
+        const Notification = require('../models/Notification');
+        await Notification.create({
+            recipientId: nextInLine.student._id,
+            recipientModel: 'Student',
+            title: 'Booking Confirmed (Waiting List)',
+            message: `You have been automatically assigned to PC ${freePc.pcId} from the waiting list! Ref: ${refNumber}`,
+            type: 'system'
+        });
+
         // Send email
         await sendBookingConfirmation(nextInLine.student, {
             referenceNumber: refNumber,
@@ -283,6 +292,15 @@ const createBooking = async (req, res) => {
             qrCode: qrCodeBase64
         });
 
+        const Notification = require('../models/Notification');
+        await Notification.create({
+            recipientId: studentId,
+            recipientModel: 'Student',
+            title: 'Booking Confirmed',
+            message: `Your booking for PC ${freePc.pcId} on ${dateObj.toLocaleDateString()} is confirmed. Ref: ${refNumber}`,
+            type: 'booking'
+        });
+
         await sendBookingConfirmation(student, {
             referenceNumber: refNumber,
             bookingDate: dateObj,
@@ -330,6 +348,15 @@ const cancelBooking = async (req, res) => {
         booking.status = 'Cancelled';
         booking.cancellationReason = reason || 'Cancelled by user';
         await booking.save();
+
+        const Notification = require('../models/Notification');
+        await Notification.create({
+            recipientId: booking.student._id,
+            recipientModel: 'Student',
+            title: 'Booking Cancelled',
+            message: `Your booking (Ref: ${booking.referenceNumber}) has been cancelled.`,
+            type: 'booking'
+        });
 
         if (booking.student) {
             await sendBookingCancellation(booking.student, {
