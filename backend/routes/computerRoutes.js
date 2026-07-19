@@ -8,12 +8,16 @@ const {
     updateComputer,
     deleteComputer,
     exportComputers,
-    importComputers
+    importComputers,
+    bulkGenerateComputers
 } = require('../controllers/computerController');
 
 router.route('/')
     .get(protect, getComputers)
     .post(protect, adminOnly, addComputer);
+
+router.route('/bulk-generate')
+    .post(protect, adminOnly, bulkGenerateComputers);
 
 router.route('/export')
     .get(protect, adminOnly, exportComputers);

@@ -279,11 +279,69 @@ const importComputers = async (req, res) => {
     }
 };
 
+// Bulk Generate Computers
+const bulkGenerateComputers = async (req, res) => {
+    try {
+        const { count, location, startId } = req.body;
+        
+        if (!count || !location || !startId) {
+            return res.status(400).json({ message: 'Count, location, and start ID are required.' });
+        }
+
+        let generatedCount = 0;
+        let start = parseInt(startId);
+
+        for (let i = 0; i < count; i++) {
+            const currentNum = start + i;
+            const pcId = `ITC${currentNum.toString().padStart(2, '0')}`;
+            const pcName = `Lab Computer ${currentNum.toString().padStart(2, '0')}`;
+
+            // Check if exists
+            const exists = await Computer.findOne({ pcId });
+            if (exists) continue;
+
+            const qrContent = JSON.stringify({
+                pcId,
+                serialNumber: '',
+                assetNumber: ''
+            });
+            const qrCodeBase64 = await QRCode.toDataURL(qrContent);
+
+            await Computer.create({
+                pcId,
+                pcName,
+                location,
+                processor: 'Standard: i5',
+                ram: '8GB RAM',
+                storage: '512GB SSD',
+                status: 'Available',
+                qrCode: qrCodeBase64
+            });
+            
+            generatedCount++;
+        }
+
+        await logAction({
+            userId: req.user._id,
+            operatorName: req.user.name,
+            role: 'Admin',
+            action: 'Bulk Generate Computers',
+            module: 'Asset',
+            description: `Admin bulk generated ${generatedCount} computers in ${location}.`
+        });
+
+        res.status(201).json({ success: true, message: `Successfully generated ${generatedCount} computers.`, count: generatedCount });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getComputers,
     addComputer,
     updateComputer,
     deleteComputer,
     exportComputers,
-    importComputers
+    importComputers,
+    bulkGenerateComputers
 };

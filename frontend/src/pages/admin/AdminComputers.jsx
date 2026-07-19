@@ -18,6 +18,8 @@ const AdminComputers = () => {
   const [showModal, setShowModal] = useState(false);
   const [editPC, setEditPC] = useState(null);
   const [form, setForm] = useState({ pcId: '', pcName: '', specs: 'Standard: i5, 8GB RAM', location: 'Row A', status: 'Available' });
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkForm, setBulkForm] = useState({ count: 10, location: 'Row A', startId: 1 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -66,6 +68,21 @@ const AdminComputers = () => {
     }
   };
 
+  const handleBulkGenerate = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      await API.post('/computers/bulk-generate', bulkForm);
+      setShowBulkModal(false);
+      fetchComputers();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to bulk generate.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this computer? This action cannot be undone.')) return;
     try {
@@ -96,13 +113,22 @@ const AdminComputers = () => {
           <h1 style={{ fontSize: '1.8rem', fontWeight: '700' }}>Computer Management</h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem' }}>Manage workstations in the IT Center.</p>
         </div>
-        <button className="glass-button" onClick={openAdd} id="add-computer-btn">
-          <Plus size={18} /> Add Computer
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="glass-button secondary" onClick={() => { setBulkForm({ count: 10, location: 'Row A', startId: 1 }); setError(''); setShowBulkModal(true); }}>
+                Bulk Generate
+            </button>
+            <button className="glass-button" onClick={openAdd} id="add-computer-btn">
+                <Plus size={18} /> Add Computer
+            </button>
+        </div>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+        <div className="glass-panel" style={{ padding: '1rem 1.5rem', flex: '1', minWidth: '110px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
+          <p style={{ fontSize: '1.6rem', fontWeight: '700', color: '#fff' }}>{computers.length}</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Computers</p>
+        </div>
         {Object.entries(statusColors).map(([status, color]) => (
           <div key={status} className="glass-panel" style={{ padding: '1rem 1.5rem', flex: '1', minWidth: '110px', textAlign: 'center' }}>
             <p style={{ fontSize: '1.6rem', fontWeight: '700', color }}>{computers.filter(c => c.status === status).length}</p>
@@ -203,11 +229,21 @@ const AdminComputers = () => {
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>PC ID *</label>
-                <input className="glass-input" placeholder="e.g. PC-01" value={form.pcId} onChange={e => setForm({ ...form, pcId: e.target.value })} required id="computer-pcId" />
+                <select className="glass-input" value={form.pcId} onChange={e => setForm({ ...form, pcId: e.target.value })} required id="computer-pcId" style={{ width: '100%' }}>
+                  <option value="" disabled>Select PC ID...</option>
+                  {Array.from({ length: 50 }, (_, i) => `ITC${(i + 1).toString().padStart(2, '0')}`).map(id => (
+                    <option key={id} value={id} style={{ background: '#1a1a3a' }}>{id}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Display Name *</label>
-                <input className="glass-input" placeholder="e.g. Lab Computer 01" value={form.pcName} onChange={e => setForm({ ...form, pcName: e.target.value })} required id="computer-name" />
+                <select className="glass-input" value={form.pcName} onChange={e => setForm({ ...form, pcName: e.target.value })} required id="computer-name" style={{ width: '100%' }}>
+                  <option value="" disabled>Select PC Name...</option>
+                  {Array.from({ length: 50 }, (_, i) => `Lab Computer ${(i + 1).toString().padStart(2, '0')}`).map(name => (
+                    <option key={name} value={name} style={{ background: '#1a1a3a' }}>{name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Specs</label>
@@ -229,6 +265,45 @@ const AdminComputers = () => {
               </div>
               <button type="submit" className="glass-button" disabled={saving} style={{ width: '100%', marginTop: '0.5rem' }}>
                 {saving ? 'Saving...' : editPC ? 'Save Changes' : 'Add Computer'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Generate Modal */}
+      {showBulkModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '460px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>Bulk Generate Computers</h2>
+              <button onClick={() => setShowBulkModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={22} /></button>
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              This will automatically generate computer records in the selected row without overwriting existing data.
+            </p>
+
+            {error && <div style={{ background: 'rgba(255,75,75,0.15)', border: '1px solid rgba(255,75,75,0.4)', borderRadius: '8px', padding: '10px 14px', marginBottom: '1.2rem', color: '#ff8080', fontSize: '0.9rem' }}>{error}</div>}
+
+            <form onSubmit={handleBulkGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>How many computers to add? *</label>
+                <input type="number" className="glass-input" min="1" max="50" value={bulkForm.count} onChange={e => setBulkForm({ ...bulkForm, count: parseInt(e.target.value) })} required style={{ width: '100%' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Target Location (Row) *</label>
+                <select className="glass-input" value={bulkForm.location} onChange={e => setBulkForm({ ...bulkForm, location: e.target.value })} style={{ width: '100%' }}>
+                  {['Row A', 'Row B', 'Row C', 'Row D', 'Row E', 'Row F', 'Row G', 'Row H'].map(s => <option key={s} value={s} style={{ background: '#1a1a3a' }}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Starting PC ID Number * (e.g. 21 for ITC21)</label>
+                <input type="number" className="glass-input" min="1" value={bulkForm.startId} onChange={e => setBulkForm({ ...bulkForm, startId: parseInt(e.target.value) })} required style={{ width: '100%' }} />
+              </div>
+              
+              <button type="submit" className="glass-button" disabled={saving} style={{ width: '100%', marginTop: '0.5rem', background: 'rgba(123,97,255,0.2)' }}>
+                {saving ? 'Generating...' : 'Generate Now'}
               </button>
             </form>
           </div>
