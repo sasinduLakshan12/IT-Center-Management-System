@@ -291,7 +291,7 @@ const registerStudent = async (req, res) => {
             password: hashedPassword,
             idCardImage: idCardPath,
             profileImage: profilePath,
-            status: 'Approved',
+            status: 'Pending Approval',
             loginAttempts: 0,
             lockUntil: null
         });
@@ -299,7 +299,7 @@ const registerStudent = async (req, res) => {
         return res.status(201).json({
             success: true,
             message:
-                'Registration successful! You can now log in.',
+                'Registration successful! Your account is pending administrator approval.',
             data: {
                 _id: student._id,
                 studentId: student.studentId,
@@ -439,8 +439,14 @@ const loginUser = async (req, res) => {
         }
 
         // Student account restrictions
-        // Email verification and pending approval checks were removed.
         if (userModel === 'Student') {
+            if (user.status === 'Pending Approval') {
+                return res.status(403).json({
+                    status: 'Pending Approval',
+                    message: 'Your registration request is pending administrator approval.'
+                });
+            }
+
             if (user.status === 'Rejected') {
                 return res.status(403).json({
                     status: 'Rejected',

@@ -76,8 +76,8 @@ const approveStudent = async (req, res) => {
             return res.status(404).json({ message: 'Student not found' });
         }
 
-        if (student.status !== 'Pending Approval') {
-            return res.status(400).json({ message: 'Student is not pending approval.' });
+        if (student.status !== 'Pending Approval' && student.status !== 'Rejected') {
+            return res.status(400).json({ message: 'Student must be pending approval or rejected.' });
         }
 
         student.status = 'Approved';

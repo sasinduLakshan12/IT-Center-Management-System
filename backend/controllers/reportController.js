@@ -127,8 +127,37 @@ const getAuditLogs = async (req, res) => {
     }
 };
 
+// @desc    Get public stats for the landing page
+// @route   GET /api/reports/public-stats
+// @access  Public
+const getPublicStats = async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        const totalComputers = await Computer.countDocuments();
+        const availableComputers = await Computer.countDocuments({ status: 'Available' });
+        const totalStudents = await Student.countDocuments();
+        const totalBookingsToday = await Booking.countDocuments({ bookingDate: today });
+
+        res.json({
+            success: true,
+            data: {
+                totalComputers,
+                availableComputers,
+                totalStudents,
+                totalBookingsToday,
+                status: 'Online'
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getDashboardStats,
     getUtilizationReport,
-    getAuditLogs
+    getAuditLogs,
+    getPublicStats
 };

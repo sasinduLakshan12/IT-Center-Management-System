@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Search, QrCode, X, Clock, Monitor, ChevronDown, CheckCircle } from 'lucide-react';
+import { Calendar, Search, QrCode, X, Clock, Monitor, ChevronDown, CheckCircle, Trash2, XCircle } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import API from '../../utils/api';
 

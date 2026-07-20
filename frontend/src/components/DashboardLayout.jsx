@@ -48,6 +48,7 @@ const DashboardLayout = ({ children }) => {
         marginLeft: '240px',
         padding: '2rem',
         minHeight: '100vh',
+        minWidth: 0,
         transition: 'margin-left 0.3s ease, padding 0.3s ease'
       }}>
         {children}

@@ -5,7 +5,7 @@ import API from '../../utils/api';
 
 const statusColors = {
   Approved: '#00e676',
-  Pending: '#ff9800',
+  'Pending Approval': '#ff9800',
   Rejected: '#ff4b4b',
   Suspended: '#ff4b4b'
 };
@@ -33,10 +33,22 @@ const AdminStudents = () => {
 
   useEffect(() => { fetchStudents(); }, [filter]);
 
-  const handleAction = async (id, action) => {
+  const handleAction = async (id, action, currentStatus) => {
     setActionLoading(id + action);
     try {
-      await API.put(`/admin/students/${id}/status`, { status: action });
+      if (action === 'Approved') {
+        if (currentStatus === 'Suspended') {
+          await API.put(`/admin/students/${id}/suspend`);
+        } else {
+          await API.put(`/admin/approve-student/${id}`);
+        }
+      } else if (action === 'Rejected') {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason) return;
+        await API.put(`/admin/reject-student/${id}`, { reason });
+      } else if (action === 'Suspended') {
+        await API.put(`/admin/students/${id}/suspend`);
+      }
       fetchStudents();
     } catch (e) {
       alert(e.response?.data?.message || 'Action failed.');
@@ -60,7 +72,7 @@ const AdminStudents = () => {
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
         {[
           { label: 'Total', value: students.length, color: '#7b61ff' },
-          { label: 'Pending', value: students.filter(s => s.status === 'Pending').length, color: '#ff9800' },
+          { label: 'Pending', value: students.filter(s => s.status === 'Pending Approval').length, color: '#ff9800' },
           { label: 'Approved', value: students.filter(s => s.status === 'Approved').length, color: '#00e676' },
           { label: 'Rejected', value: students.filter(s => s.status === 'Rejected').length, color: '#ff4b4b' },
         ].map(s => (
@@ -77,14 +89,14 @@ const AdminStudents = () => {
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
           <input className="glass-input" placeholder="Search by name, ID or email..." style={{ paddingLeft: '38px' }} value={search} onChange={e => setSearch(e.target.value)} id="students-search" />
         </div>
-        {['all', 'Pending', 'Approved', 'Rejected', 'Suspended'].map(f => (
+        {['all', 'Pending Approval', 'Approved', 'Rejected', 'Suspended'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500',
             border: filter === f ? `1px solid ${statusColors[f] || 'var(--accent-color)'}` : '1px solid rgba(255,255,255,0.12)',
             background: filter === f ? `${statusColors[f] || 'var(--accent-color)'}22` : 'rgba(0,0,0,0.2)',
             color: filter === f ? (statusColors[f] || 'var(--accent-color)') : 'var(--text-secondary)',
             transition: 'all 0.2s'
-          }}>{f === 'all' ? 'All' : f}</button>
+          }}>{f === 'all' ? 'All' : f === 'Pending Approval' ? 'Pending' : f}</button>
         ))}
       </div>
 
@@ -143,10 +155,10 @@ const AdminStudents = () => {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '6px' }}>
-                {s.status === 'Pending' && (
+                {s.status === 'Pending Approval' && (
                   <>
                     <button
-                      onClick={() => handleAction(s._id, 'Approved')}
+                      onClick={() => handleAction(s._id, 'Approved', s.status)}
                       disabled={!!actionLoading}
                       title="Approve"
                       style={{ padding: '6px', borderRadius: '8px', background: 'rgba(0,230,118,0.12)', border: '1px solid rgba(0,230,118,0.3)', color: '#00e676', cursor: 'pointer' }}
@@ -154,7 +166,7 @@ const AdminStudents = () => {
                       <CheckCircle size={16} />
                     </button>
                     <button
-                      onClick={() => handleAction(s._id, 'Rejected')}
+                      onClick={() => handleAction(s._id, 'Rejected', s.status)}
                       disabled={!!actionLoading}
                       title="Reject"
                       style={{ padding: '6px', borderRadius: '8px', background: 'rgba(255,75,75,0.12)', border: '1px solid rgba(255,75,75,0.3)', color: '#ff6b6b', cursor: 'pointer' }}
@@ -165,7 +177,7 @@ const AdminStudents = () => {
                 )}
                 {s.status === 'Approved' && (
                   <button
-                    onClick={() => handleAction(s._id, 'Suspended')}
+                    onClick={() => handleAction(s._id, 'Suspended', s.status)}
                     disabled={!!actionLoading}
                     title="Suspend"
                     style={{ padding: '6px', borderRadius: '8px', background: 'rgba(255,152,0,0.12)', border: '1px solid rgba(255,152,0,0.3)', color: '#ff9800', cursor: 'pointer' }}
@@ -175,7 +187,7 @@ const AdminStudents = () => {
                 )}
                 {(s.status === 'Rejected' || s.status === 'Suspended') && (
                   <button
-                    onClick={() => handleAction(s._id, 'Approved')}
+                    onClick={() => handleAction(s._id, 'Approved', s.status)}
                     disabled={!!actionLoading}
                     title="Re-approve"
                     style={{ padding: '6px', borderRadius: '8px', background: 'rgba(0,230,118,0.12)', border: '1px solid rgba(0,230,118,0.3)', color: '#00e676', cursor: 'pointer' }}

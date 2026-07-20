@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Monitor, ArrowRight, ShieldCheck, Clock, Zap, BookOpen, Sun, Moon, Users, Cpu, Calendar, CheckCircle, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import API from '../utils/api';
 
 const Home = () => {
     const { user, logout } = useAuth();
@@ -10,6 +11,28 @@ const Home = () => {
         const saved = localStorage.getItem('theme');
         return saved ? saved === 'dark' : true;
     });
+
+    const [liveStats, setLiveStats] = useState({
+        totalComputers: 0,
+        availableComputers: 0,
+        totalStudents: 0,
+        totalBookingsToday: 0,
+        status: 'Online'
+    });
+
+    useEffect(() => {
+        const fetchLiveStats = async () => {
+            try {
+                const { data } = await API.get('/reports/public-stats');
+                if (data.success && data.data) {
+                    setLiveStats(data.data);
+                }
+            } catch (e) {
+                console.error('Failed to fetch public stats:', e);
+            }
+        };
+        fetchLiveStats();
+    }, []);
 
     useEffect(() => {
         if (isDark) {
@@ -95,10 +118,10 @@ const Home = () => {
     ];
 
     const stats = [
-        { icon: <Cpu size={18} />, color: '#7b61ff', label: 'Total PCs', value: '40 Seats', pulse: true },
-        { icon: <Users size={18} />, color: '#00d2ff', label: 'Active Students', value: 'Registered', pulse: false },
-        { icon: <Calendar size={18} />, color: '#00e676', label: 'Bookings Today', value: 'Live Tracking', pulse: false },
-        { icon: <CheckCircle size={18} />, color: '#ff9800', label: 'System Status', value: 'Online', pulse: true },
+        { icon: <Cpu size={18} />, color: '#7b61ff', label: 'Total PCs', value: `${liveStats.totalComputers} Seats (${liveStats.availableComputers} Free)`, pulse: true },
+        { icon: <Users size={18} />, color: '#00d2ff', label: 'Active Students', value: `${liveStats.totalStudents} Registered`, pulse: false },
+        { icon: <Calendar size={18} />, color: '#00e676', label: 'Bookings Today', value: `${liveStats.totalBookingsToday} Reserved`, pulse: false },
+        { icon: <CheckCircle size={18} />, color: '#ff9800', label: 'System Status', value: liveStats.status, pulse: true },
     ];
 
     return (
