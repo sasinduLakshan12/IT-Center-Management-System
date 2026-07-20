@@ -300,13 +300,6 @@ const AdminStudents = () => {
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                {selectedStudent.profileImage ? (
-                  <img
-                    src={`http://localhost:5000/uploads/${selectedStudent.profileImage}`}
-                    alt="Profile"
-                    style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent-color)' }}
-                  />
-                ) : (
                   <div style={{
                     width: '56px', height: '56px', borderRadius: '50%',
                     background: 'linear-gradient(135deg, #7b61ff, #00d2ff)',
@@ -315,7 +308,6 @@ const AdminStudents = () => {
                   }}>
                     {selectedStudent.name?.charAt(0).toUpperCase()}
                   </div>
-                )}
                 <div>
                   <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>{selectedStudent.name}</h2>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>ID: {selectedStudent.studentId}</p>
@@ -358,21 +350,7 @@ const AdminStudents = () => {
               </div>
             </div>
 
-            {/* ID Card Verification image */}
-            <div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Student ID Card verification</p>
-              {selectedStudent.idCardImage ? (
-                <img
-                  src={`http://localhost:5000/uploads/${selectedStudent.idCardImage}`}
-                  alt="Student ID Card"
-                  style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', maxHeight: '200px' }}
-                />
-              ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  No student ID card photo uploaded.
-                </div>
-              )}
-            </div>
+
 
             {/* Modal Footer Actions */}
             <div style={{ display: 'flex', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
