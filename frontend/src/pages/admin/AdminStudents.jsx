@@ -16,14 +16,14 @@ const AdminStudents = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState(null);
+  const [rejectionModal, setRejectionModal] = useState({ open: false, studentId: null, reason: '' });
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (filter !== 'all') params.status = filter;
-      const { data } = await API.get('/admin/students', { params });
-      setStudents(data.data || []);
+      const { data } = await API.get('/admin/students');
+      setStudents(data || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -31,7 +31,7 @@ const AdminStudents = () => {
     }
   };
 
-  useEffect(() => { fetchStudents(); }, [filter]);
+  useEffect(() => { fetchStudents(); }, []);
 
   const handleAction = async (id, action, currentStatus) => {
     setActionLoading(id + action);
@@ -43,9 +43,8 @@ const AdminStudents = () => {
           await API.put(`/admin/approve-student/${id}`);
         }
       } else if (action === 'Rejected') {
-        const reason = prompt('Enter rejection reason:');
-        if (!reason) return;
-        await API.put(`/admin/reject-student/${id}`, { reason });
+        setRejectionModal({ open: true, studentId: id, reason: '' });
+        return; // Modal handles submission
       } else if (action === 'Suspended') {
         await API.put(`/admin/students/${id}/suspend`);
       }
@@ -57,9 +56,34 @@ const AdminStudents = () => {
     }
   };
 
-  const filtered = students.filter(s =>
-    search ? (s.name?.toLowerCase().includes(search.toLowerCase()) || s.studentId?.toLowerCase().includes(search.toLowerCase()) || s.email?.toLowerCase().includes(search.toLowerCase())) : true
-  );
+  const submitRejection = async () => {
+    if (!rejectionModal.reason.trim()) {
+      alert('Rejection reason is required.');
+      return;
+    }
+    setActionLoading(rejectionModal.studentId + 'Rejected');
+    try {
+      await API.put(`/admin/reject-student/${rejectionModal.studentId}`, { reason: rejectionModal.reason });
+      setRejectionModal({ open: false, studentId: null, reason: '' });
+      fetchStudents();
+    } catch (e) {
+      alert(e.response?.data?.message || 'Rejection failed.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const filtered = students.filter(s => {
+    const matchesSearch = search 
+      ? (s.name?.toLowerCase().includes(search.toLowerCase()) || 
+         s.studentId?.toLowerCase().includes(search.toLowerCase()) || 
+         s.email?.toLowerCase().includes(search.toLowerCase())) 
+      : true;
+    
+    const matchesFilter = filter === 'all' ? true : s.status === filter;
+    
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <DashboardLayout>
@@ -155,6 +179,14 @@ const AdminStudents = () => {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  onClick={() => setSelectedStudent(s)}
+                  disabled={!!actionLoading}
+                  title="View Details"
+                  style={{ padding: '6px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <Eye size={16} />
+                </button>
                 {s.status === 'Pending Approval' && (
                   <>
                     <button
@@ -200,6 +232,187 @@ const AdminStudents = () => {
           ))
         )}
       </div>
+      {/* Custom Rejection Modal */}
+      {rejectionModal.open && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div className="glass-panel" style={{
+            width: '100%', maxWidth: '450px', padding: '2rem',
+            display: 'flex', flexDirection: 'column', gap: '1.5rem',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            border: '1px solid rgba(255,255,255,0.12)'
+          }}>
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#ff4b4b', marginBottom: '0.5rem' }}>Reject Registration</h2>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Please provide a clear reason for rejecting this student's registration request.</p>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600' }}>REJECTION REASON</label>
+              <textarea
+                className="glass-input"
+                rows={4}
+                placeholder="e.g. Invalid ID card photo / Information mismatch..."
+                style={{ resize: 'none', width: '100%', fontFamily: 'inherit' }}
+                value={rejectionModal.reason}
+                onChange={e => setRejectionModal(prev => ({ ...prev, reason: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="glass-button secondary"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={() => setRejectionModal({ open: false, studentId: null, reason: '' })}
+                disabled={!!actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="glass-button"
+                style={{ flex: 1, padding: '10px', background: '#ff4b4b', boxShadow: '0 4px 15px rgba(255,75,75,0.3)' }}
+                onClick={submitRejection}
+                disabled={!!actionLoading || !rejectionModal.reason.trim()}
+              >
+                {actionLoading ? 'Rejecting...' : 'Reject Student'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Student Details Modal */}
+      {selectedStudent && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999
+        }}>
+          <div className="glass-panel" style={{
+            width: '90%', maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem',
+            display: 'flex', flexDirection: 'column', gap: '1.5rem',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            border: '1px solid rgba(255,255,255,0.12)'
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                {selectedStudent.profileImage ? (
+                  <img
+                    src={`http://localhost:5000/uploads/${selectedStudent.profileImage}`}
+                    alt="Profile"
+                    style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent-color)' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '56px', height: '56px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #7b61ff, #00d2ff)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1.4rem', fontWeight: '700'
+                  }}>
+                    {selectedStudent.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>{selectedStudent.name}</h2>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>ID: {selectedStudent.studentId}</p>
+                </div>
+              </div>
+              <span style={{
+                display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
+                fontSize: '0.78rem', fontWeight: '600',
+                background: `${statusColors[selectedStudent.status] || 'rgba(255,255,255,0.1)'}18`,
+                color: statusColors[selectedStudent.status] || 'var(--text-secondary)',
+                border: `1px solid ${statusColors[selectedStudent.status] || 'rgba(255,255,255,0.1)'}40`
+              }}>{selectedStudent.status}</span>
+            </div>
+
+            {/* Student Info Details */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Email Address</p>
+                <p style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={selectedStudent.email}>{selectedStudent.email}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Phone Number</p>
+                <p style={{ fontSize: '0.9rem' }}>{selectedStudent.phone || '—'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Department</p>
+                <p style={{ fontSize: '0.9rem' }}>{selectedStudent.department?.name || '—'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Degree Programme</p>
+                <p style={{ fontSize: '0.9rem' }}>{selectedStudent.degreeProgramme?.name || '—'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Academic Year</p>
+                <p style={{ fontSize: '0.9rem' }}>{selectedStudent.academicYear || '—'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Semester</p>
+                <p style={{ fontSize: '0.9rem' }}>{selectedStudent.semester || '—'}</p>
+              </div>
+            </div>
+
+            {/* ID Card Verification image */}
+            <div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Student ID Card verification</p>
+              {selectedStudent.idCardImage ? (
+                <img
+                  src={`http://localhost:5000/uploads/${selectedStudent.idCardImage}`}
+                  alt="Student ID Card"
+                  style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', maxHeight: '200px' }}
+                />
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  No student ID card photo uploaded.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div style={{ display: 'flex', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
+              <button
+                className="glass-button secondary"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={() => setSelectedStudent(null)}
+              >
+                Close
+              </button>
+              {selectedStudent.status === 'Pending Approval' && (
+                <>
+                  <button
+                    className="glass-button"
+                    style={{ flex: 1, padding: '10px', background: '#ff4b4b', boxShadow: '0 4px 15px rgba(255,75,75,0.3)' }}
+                    onClick={() => {
+                      const id = selectedStudent._id;
+                      setSelectedStudent(null);
+                      handleAction(id, 'Rejected', 'Pending Approval');
+                    }}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    className="glass-button"
+                    style={{ flex: 1, padding: '10px', background: '#00e676', boxShadow: '0 4px 15px rgba(0,230,118,0.3)' }}
+                    onClick={async () => {
+                      const id = selectedStudent._id;
+                      setSelectedStudent(null);
+                      await handleAction(id, 'Approved', 'Pending Approval');
+                    }}
+                  >
+                    Approve
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

@@ -150,8 +150,8 @@ const rejectStudent = async (req, res) => {
 const getStudents = async (req, res) => {
     try {
         const students = await Student.find({}).select('-password')
-            .populate('department', 'departmentName')
-            .populate('degreeProgramme', 'programmeName');
+            .populate('department', 'name')
+            .populate('degreeProgramme', 'name');
         res.json(students);
     } catch (error) {
         res.status(500).json({ message: error.message });
