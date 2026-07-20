@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Sidebar = () => {
+const Sidebar = ({ mobileOpen, setMobileOpen }) => {
   const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -41,16 +41,14 @@ const Sidebar = () => {
   };
 
   return (
-    <div style={{
+    <div className={`dashboard-sidebar ${mobileOpen ? 'mobile-open' : ''}`} style={{
       width: collapsed ? '72px' : '240px',
       minHeight: '100vh',
-      background: 'rgba(255,255,255,0.05)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      background: '#09091e', // Solid background on mobile/collapsed to avoid blur overlap issues
       borderRight: '1px solid rgba(255,255,255,0.1)',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'width 0.3s ease',
+      transition: 'width 0.3s ease, left 0.3s ease',
       position: 'fixed',
       top: 0, left: 0,
       zIndex: 100,
@@ -126,16 +124,35 @@ const Sidebar = () => {
         </button>
 
         {/* Collapse button */}
-        <button onClick={() => setCollapsed(!collapsed)} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: '100%', padding: '10px', marginTop: '4px',
-          borderRadius: '10px', background: 'none', border: '1px solid rgba(255,255,255,0.08)',
-          color: 'var(--text-secondary)', cursor: 'pointer',
-          transition: 'all 0.2s ease'
-        }}>
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        <div className="collapse-btn-container">
+          <button onClick={() => setCollapsed(!collapsed)} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', padding: '10px', marginTop: '4px',
+            borderRadius: '10px', background: 'none', border: '1px solid rgba(255,255,255,0.08)',
+            color: 'var(--text-secondary)', cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}>
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .dashboard-sidebar {
+            left: -240px !important;
+            width: 240px !important;
+            transition: left 0.3s ease !important;
+            background: #09091e !important;
+          }
+          .dashboard-sidebar.mobile-open {
+            left: 0 !important;
+          }
+          .collapse-btn-container {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

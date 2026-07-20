@@ -52,7 +52,6 @@ const registerStudent = async (req, res) => {
             studentId,
             name,
             email,
-            personalEmail,
             phone,
             department,
             degreeProgramme,
@@ -284,9 +283,6 @@ const registerStudent = async (req, res) => {
             studentId: normalizedStudentId,
             name: name.trim(),
             email: normalizedEmail,
-            personalEmail: personalEmail
-                ? personalEmail.toLowerCase().trim()
-                : '',
             phone: phone.trim(),
             department: resolvedDeptId,
             degreeProgramme: resolvedProgId,

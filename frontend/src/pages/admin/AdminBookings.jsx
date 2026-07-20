@@ -96,51 +96,63 @@ const AdminBookings = () => {
       </div>
 
       {/* Table */}
-      <div className="glass-panel" style={{ overflow: 'hidden' }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr',
-          padding: '0.75rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)',
-          fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em'
-        }}>
-          <span>Student</span><span>Reference</span><span>Date</span><span>Slot</span><span>PC</span><span>Status</span>
-        </div>
+      <div className="glass-panel" style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: '850px' }}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr 50px',
+            padding: '0.75rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)',
+            fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em'
+          }}>
+            <span>Student</span><span>Reference</span><span>Date</span><span>Slot</span><span>PC</span><span>Status</span><span></span>
+          </div>
 
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading bookings...</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <Calendar size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-            <p style={{ color: 'var(--text-secondary)' }}>No bookings found.</p>
-          </div>
-        ) : filtered.map((b, i) => (
-          <div key={b._id} style={{
-            display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr',
-            padding: '1rem 1.5rem', alignItems: 'center',
-            borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-            transition: 'background 0.2s'
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            <div>
-              <p style={{ fontWeight: '500', fontSize: '0.9rem' }}>{b.student?.name}</p>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{b.student?.studentId}</p>
+          {loading ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading bookings...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: '3rem', textAlign: 'center' }}>
+              <Calendar size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+              <p style={{ color: 'var(--text-secondary)' }}>No bookings found.</p>
             </div>
-            <span style={{ fontSize: '0.82rem', color: '#7b61ff', fontWeight: '600', fontFamily: 'monospace' }}>{b.referenceNumber}</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              {new Date(b.bookingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-            </span>
-            <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{b.timeSlot?.slotName || '—'}</span>
-            <span style={{ fontSize: '0.85rem' }}>{b.assignedComputer?.pcId ? `PC ${b.assignedComputer.pcId}` : '—'}</span>
-            <span style={{
-              display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
-              fontSize: '0.78rem', fontWeight: '600',
-              background: `${statusColors[b.status] || 'rgba(255,255,255,0.1)'}18`,
-              color: statusColors[b.status] || 'var(--text-secondary)',
-              border: `1px solid ${statusColors[b.status] || 'rgba(255,255,255,0.1)'}40`
-            }}>{b.status}</span>
-          </div>
-        ))}
+          ) : filtered.map((b, i) => (
+            <div key={b._id} style={{
+              display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr 50px',
+              padding: '1rem 1.5rem', alignItems: 'center',
+              borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              transition: 'background 0.2s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <div>
+                <p style={{ fontWeight: '500', fontSize: '0.9rem' }}>{b.student?.name}</p>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{b.student?.studentId}</p>
+              </div>
+              <span style={{ fontSize: '0.82rem', color: '#7b61ff', fontWeight: '600', fontFamily: 'monospace' }}>{b.referenceNumber}</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {new Date(b.bookingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              </span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{b.timeSlot?.slotName || '—'}</span>
+              <span style={{ fontSize: '0.85rem' }}>{b.assignedComputer?.pcId ? `PC ${b.assignedComputer.pcId}` : '—'}</span>
+              <span style={{
+                display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
+                fontSize: '0.78rem', fontWeight: '600', width: 'fit-content',
+                background: `${statusColors[b.status] || 'rgba(255,255,255,0.1)'}18`,
+                color: statusColors[b.status] || 'var(--text-secondary)',
+                border: `1px solid ${statusColors[b.status] || 'rgba(255,255,255,0.1)'}40`
+              }}>{b.status}</span>
+              <div style={{ textAlign: 'right', display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                {['Confirmed', 'Pending'].includes(b.status) && (
+                  <button onClick={() => handleCancelBooking(b._id)} title="Cancel Booking" style={{ background: 'none', border: 'none', color: '#ff9800', cursor: 'pointer', padding: '5px', opacity: 0.7, transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7}>
+                    <XCircle size={18} />
+                  </button>
+                )}
+                <button onClick={() => handleDeleteBooking(b._id)} title="Delete Booking" style={{ background: 'none', border: 'none', color: '#ff4b4b', cursor: 'pointer', padding: '5px', opacity: 0.7, transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Check-In Modal */}

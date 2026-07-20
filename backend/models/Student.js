@@ -20,12 +20,6 @@ const studentSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-    personalEmail: {
-        type: String,
-        lowercase: true,
-        trim: true,
-        default: ''
-    },
     phone: {
         type: String,
         required: true,

@@ -1,8 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Monitor, ArrowRight, ShieldCheck, Clock, Zap, BookOpen, Sun, Moon, Users, Cpu, Calendar, CheckCircle } from 'lucide-react';
+import { Monitor, ArrowRight, ShieldCheck, Clock, Zap, BookOpen, Sun, Moon, Users, Cpu, Calendar, CheckCircle, LogOut, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [isDark, setIsDark] = useState(() => {
         const saved = localStorage.getItem('theme');
         return saved ? saved === 'dark' : true;
@@ -19,6 +22,15 @@ const Home = () => {
     }, [isDark]);
 
     const toggleTheme = () => setIsDark(prev => !prev);
+
+    const handleLogoutClick = () => {
+        logout();
+        navigate('/');
+    };
+
+    const dashboardLink = user 
+        ? (user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard')
+        : '/login';
 
     // Theme tokens
     const t = isDark ? {
@@ -90,7 +102,7 @@ const Home = () => {
     ];
 
     return (
-        <div style={{
+        <div className="home-root" style={{
             minHeight: '100vh',
             background: t.bg,
             color: t.text,
@@ -134,15 +146,16 @@ const Home = () => {
             }} />
 
             {/* ── NAVBAR ── */}
-            <header style={{
-                position: 'sticky', top: 0, zIndex: 100,
+            <header className="home-header" style={{
+                position: 'sticky',
+                top: 0, zIndex: 100,
                 background: t.navBg,
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 borderBottom: `1px solid ${t.navBorder}`,
                 transition: 'background 0.4s ease',
             }}>
-                <div style={{
+                <div className="home-nav-container" style={{
                     maxWidth: '1200px', margin: '0 auto',
                     padding: '0 2rem',
                     height: '64px',
@@ -170,32 +183,68 @@ const Home = () => {
 
                     {/* Nav Actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <Link to="/login" style={{
-                            padding: '8px 18px', borderRadius: '10px',
-                            fontWeight: 600, fontSize: '0.9rem',
-                            color: t.text, textDecoration: 'none',
-                            background: t.btnSecBg,
-                            border: `1px solid ${t.btnSecBorder}`,
-                            transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                        >
-                            Sign In
-                        </Link>
-                        <Link to="/register" style={{
-                            padding: '8px 20px', borderRadius: '10px',
-                            fontWeight: 700, fontSize: '0.9rem',
-                            color: '#fff', textDecoration: 'none',
-                            background: 'linear-gradient(135deg, #7b61ff, #5b3ff0)',
-                            boxShadow: '0 4px 16px rgba(123,97,255,0.35)',
-                            transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,97,255,0.5)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(123,97,255,0.35)'; }}
-                        >
-                            Register
-                        </Link>
+                        {user ? (
+                            <>
+                                <Link to={dashboardLink} style={{
+                                    padding: '8px 18px', borderRadius: '10px',
+                                    fontWeight: 700, fontSize: '0.9rem',
+                                    color: '#fff', textDecoration: 'none',
+                                    background: 'linear-gradient(135deg, #7b61ff, #5b3ff0)',
+                                    boxShadow: '0 4px 16px rgba(123,97,255,0.35)',
+                                    transition: 'all 0.2s ease',
+                                    display: 'inline-flex', alignItems: 'center', gap: '6px'
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,97,255,0.5)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(123,97,255,0.35)'; }}
+                                >
+                                    <LayoutDashboard size={15} /> Dashboard
+                                </Link>
+                                <button onClick={handleLogoutClick} style={{
+                                    padding: '8px 18px', borderRadius: '10px',
+                                    fontWeight: 600, fontSize: '0.9rem',
+                                    color: '#ff6b6b', textDecoration: 'none',
+                                    background: 'rgba(255,107,107,0.08)',
+                                    border: '1px solid rgba(255,107,107,0.2)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'inline-flex', alignItems: 'center', gap: '6px'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,107,0.15)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,107,107,0.08)'}
+                                >
+                                    <LogOut size={15} /> Sign Out
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login" style={{
+                                    padding: '8px 18px', borderRadius: '10px',
+                                    fontWeight: 600, fontSize: '0.9rem',
+                                    color: t.text, textDecoration: 'none',
+                                    background: t.btnSecBg,
+                                    border: `1px solid ${t.btnSecBorder}`,
+                                    transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                >
+                                    Sign In
+                                </Link>
+                                <Link to="/register" style={{
+                                    padding: '8px 20px', borderRadius: '10px',
+                                    fontWeight: 700, fontSize: '0.9rem',
+                                    color: '#fff', textDecoration: 'none',
+                                    background: 'linear-gradient(135deg, #7b61ff, #5b3ff0)',
+                                    boxShadow: '0 4px 16px rgba(123,97,255,0.35)',
+                                    transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,97,255,0.5)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(123,97,255,0.35)'; }}
+                                >
+                                    Register
+                                </Link>
+                            </>
+                        )}
 
                         {/* Dark / Light Toggle */}
                         <button
@@ -221,14 +270,14 @@ const Home = () => {
             </header>
 
             {/* ── HERO SECTION ── */}
-            <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>
-                <div style={{
+            <main className="home-main" style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+                <div className="home-hero-container" style={{
                     maxWidth: '1200px', margin: '0 auto', padding: '5rem 2rem 4rem',
                     display: 'flex', alignItems: 'center', gap: '4rem',
                     flexWrap: 'wrap',
                 }}>
                     {/* Left Column */}
-                    <div style={{ flex: '1 1 480px', minWidth: '280px' }}>
+                    <div className="home-left-col" style={{ flex: '1 1 480px', minWidth: '280px' }}>
                         {/* Badge */}
                         <div style={{
                             display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -244,7 +293,7 @@ const Home = () => {
                         </div>
 
                         {/* Heading */}
-                        <h1 style={{
+                        <h1 className="home-heading" style={{
                             fontSize: 'clamp(2.2rem, 5vw, 3.5rem)',
                             fontWeight: 800,
                             lineHeight: 1.1,
@@ -263,7 +312,7 @@ const Home = () => {
                             </span>
                         </h1>
 
-                        <p style={{
+                        <p className="home-desc" style={{
                             fontSize: '1.05rem', lineHeight: 1.7,
                             color: t.textSub, marginBottom: '2.5rem',
                             maxWidth: '500px',
@@ -272,8 +321,8 @@ const Home = () => {
                         </p>
 
                         {/* CTA Buttons */}
-                        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '3rem' }}>
-                            <Link to="/register" style={{
+                        <div className="home-cta-container" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '3rem' }}>
+                            <Link to={user ? (user.role === 'admin' ? '/admin/dashboard' : '/student/book') : '/register'} style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '8px',
                                 padding: '13px 28px', borderRadius: '12px',
                                 fontWeight: 700, fontSize: '0.95rem',
@@ -285,9 +334,9 @@ const Home = () => {
                             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(123,97,255,0.55)'; }}
                             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(123,97,255,0.4)'; }}
                             >
-                                Book a Workstation <ArrowRight size={18} />
+                                {user ? 'Book a Workstation' : 'Get Started Now'} <ArrowRight size={18} />
                             </Link>
-                            <Link to="/login" style={{
+                            <Link to={dashboardLink} style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '8px',
                                 padding: '13px 28px', borderRadius: '12px',
                                 fontWeight: 600, fontSize: '0.95rem',
@@ -300,12 +349,12 @@ const Home = () => {
                             onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
                             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                             >
-                                Member Dashboard
+                                {user ? 'Go to Dashboard' : 'Member Dashboard'}
                             </Link>
                         </div>
 
                         {/* Feature Cards Grid */}
-                        <div style={{
+                        <div className="home-features-grid" style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
                             gap: '12px',
@@ -343,7 +392,7 @@ const Home = () => {
                     </div>
 
                     {/* Right Column – Glass Status Card */}
-                    <div style={{ flex: '0 1 380px', minWidth: '280px' }}>
+                    <div className="home-right-col" style={{ flex: '0 1 380px', minWidth: '280px' }}>
                         <div style={{
                             background: t.cardBg,
                             border: `1px solid ${t.cardBorder}`,
@@ -443,7 +492,7 @@ const Home = () => {
                             </div>
 
                             {/* CTA */}
-                            <Link to="/login" style={{
+                            <Link to={user ? (user.role === 'admin' ? '/admin/dashboard' : '/student/book') : '/login'} style={{
                                 display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
                                 padding: '14px',
                                 background: 'linear-gradient(135deg, #7b61ff, #00d2ff)',
@@ -456,7 +505,7 @@ const Home = () => {
                             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(123,97,255,0.5)'; }}
                             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,97,255,0.35)'; }}
                             >
-                                Log In to Book Now <ArrowRight size={16} />
+                                {user ? 'Go to Booking' : 'Log In to Book Now'} <ArrowRight size={16} />
                             </Link>
                         </div>
                     </div>
@@ -495,6 +544,67 @@ const Home = () => {
                     50% { opacity: 0.5; transform: scale(0.85); }
                 }
                 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+                /* Mobile responsiveness */
+                @media (max-width: 768px) {
+                    .home-nav-container {
+                        padding: 0 1.25rem !important;
+                    }
+                    .home-hero-container {
+                        padding: 2.5rem 1.25rem 2rem !important;
+                        gap: 2.5rem !important;
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                    }
+                    .home-left-col {
+                        flex: 1 1 auto !important;
+                        text-align: center !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                    }
+                    .home-right-col {
+                        flex: 1 1 auto !important;
+                        max-width: 100% !important;
+                    }
+                    .home-cta-container {
+                        justify-content: center !important;
+                        width: 100% !important;
+                    }
+                    .home-cta-container > a {
+                        flex: 1 !important;
+                        min-width: 180px !important;
+                        justify-content: center !important;
+                    }
+                    .home-features-grid {
+                        grid-template-columns: 1fr !important;
+                        width: 100% !important;
+                        text-align: left !important;
+                        gap: 10px !important;
+                    }
+                    .home-heading {
+                        font-size: 2.3rem !important;
+                        margin-bottom: 1rem !important;
+                    }
+                    .home-desc {
+                        margin-bottom: 1.75rem !important;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .home-nav-container {
+                        flex-direction: row !important;
+                        height: 64px !important;
+                        padding: 0 0.75rem !important;
+                        gap: 8px !important;
+                    }
+                    .home-nav-container a {
+                        padding: 6px 12px !important;
+                        font-size: 0.8rem !important;
+                    }
+                    .home-root {
+                        overflow-x: hidden !important;
+                    }
+                }
             `}</style>
         </div>
     );

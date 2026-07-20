@@ -65,7 +65,6 @@ const Register = () => {
     name: '',
     studentId: '',
     email: '',
-    personalEmail: '',
     phone: '',
     password: '',
     confirmPassword: '',
@@ -134,7 +133,6 @@ const Register = () => {
         name: formData.name,
         studentId: formData.studentId,
         email: formData.email,
-        personalEmail: formData.personalEmail,
         phone: formData.phone,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
@@ -254,21 +252,12 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* University Email */}
+                {/* Email */}
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500' }}>University Email Address</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Email Address</label>
                   <div style={{ position: 'relative' }}>
                     <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)' }} />
-                    <input type="email" name="email" className="glass-input" placeholder="student@univ.ac.lk" style={{ paddingLeft: '42px' }} value={formData.email} onChange={handleChange} required id="reg-email" />
-                  </div>
-                </div>
-
-                {/* Personal Email */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Personal Email Address (Optional)</label>
-                  <div style={{ position: 'relative' }}>
-                    <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)' }} />
-                    <input type="email" name="personalEmail" className="glass-input" placeholder="personal@gmail.com" style={{ paddingLeft: '42px' }} value={formData.personalEmail} onChange={handleChange} id="reg-personalEmail" />
+                    <input type="email" name="email" className="glass-input" placeholder="e.g. personal@gmail.com" style={{ paddingLeft: '42px' }} value={formData.email} onChange={handleChange} required id="reg-email" />
                   </div>
                 </div>
 
