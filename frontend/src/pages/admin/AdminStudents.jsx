@@ -95,10 +95,9 @@ const AdminStudents = () => {
       {/* Stats Row */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
         {[
-          { label: 'Total', value: students.length, color: '#7b61ff' },
-          { label: 'Pending', value: students.filter(s => s.status === 'Pending Approval').length, color: '#ff9800' },
-          { label: 'Approved', value: students.filter(s => s.status === 'Approved').length, color: '#00e676' },
-          { label: 'Rejected', value: students.filter(s => s.status === 'Rejected').length, color: '#ff4b4b' },
+          { label: 'Total Students', value: students.length, color: '#7b61ff' },
+          { label: 'Active / Approved', value: students.filter(s => s.status === 'Approved').length, color: '#00e676' },
+          { label: 'Suspended', value: students.filter(s => s.status === 'Suspended').length, color: '#ff4b4b' },
         ].map(s => (
           <div key={s.label} className="glass-panel" style={{ padding: '1rem 1.5rem', flex: '1', minWidth: '120px', textAlign: 'center' }}>
             <p style={{ fontSize: '1.6rem', fontWeight: '700', color: s.color }}>{s.value}</p>
@@ -113,14 +112,14 @@ const AdminStudents = () => {
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
           <input className="glass-input" placeholder="Search by name, ID or email..." style={{ paddingLeft: '38px' }} value={search} onChange={e => setSearch(e.target.value)} id="students-search" />
         </div>
-        {['all', 'Pending Approval', 'Approved', 'Rejected', 'Suspended'].map(f => (
+        {['all', 'Approved', 'Suspended'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500',
             border: filter === f ? `1px solid ${statusColors[f] || 'var(--accent-color)'}` : '1px solid rgba(255,255,255,0.12)',
             background: filter === f ? `${statusColors[f] || 'var(--accent-color)'}22` : 'rgba(0,0,0,0.2)',
             color: filter === f ? (statusColors[f] || 'var(--accent-color)') : 'var(--text-secondary)',
             transition: 'all 0.2s'
-          }}>{f === 'all' ? 'All' : f === 'Pending Approval' ? 'Pending' : f}</button>
+          }}>{f === 'all' ? 'All' : f}</button>
         ))}
       </div>
 
