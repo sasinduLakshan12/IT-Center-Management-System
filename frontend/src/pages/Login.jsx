@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Mail, Lock, LogIn, Eye, EyeOff, Monitor } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
+import API from '../utils/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -23,6 +25,41 @@ const Login = () => {
       else navigate('/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const res = await API.post('/auth/google-login', { token: credentialResponse.credential });
+      
+      if (res.data.success) {
+        login(res.data);
+        if (res.data.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/student');
+        }
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      if (err.response?.status === 404 && err.response?.data?.email) {
+        setError('Account not registered. Redirecting to complete registration...');
+        setTimeout(() => {
+          navigate('/register', { 
+            state: { 
+              googleEmail: err.response.data.email, 
+              googleName: err.response.data.name 
+            } 
+          });
+        }, 1500);
+      } else {
+        setError(err.response?.data?.message || 'Google login failed.');
+      }
     } finally {
       setLoading(false);
     }
@@ -125,6 +162,27 @@ const Login = () => {
               {loading ? 'Signing in...' : <><LogIn size={18} /> Sign In</>}
             </button>
           </form>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1.2rem 0 0.8rem 0' }}>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}></div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>or</span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}></div>
+          </div>
+
+          {/* Google Login Button */}
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => {
+                setError('Google authentication failed. Please try again.');
+              }}
+              theme="filled_blue"
+              shape="pill"
+              size="large"
+              width="372px"
+            />
+          </div>
 
           <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Don't have an account?{' '}

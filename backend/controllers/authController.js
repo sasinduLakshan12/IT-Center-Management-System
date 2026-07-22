@@ -8,6 +8,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const Department = require('../models/Department');
 const DegreeProgramme = require('../models/DegreeProgramme');
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '139317565733-h9ldme7k4qbbfjfhirvduob201fflj83.apps.googleusercontent.com');
 
 // Helper to generate access & refresh tokens
 const generateTokens = (id) => {
@@ -513,6 +515,105 @@ const loginUser = async (req, res) => {
     }
 };
 
+// @desc    Login/Authenticate user via Google OAuth Token
+// @route   POST /api/auth/google-login
+// @access  Public
+const googleLogin = async (req, res) => {
+    try {
+        const { token } = req.body;
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || '127.0.0.1';
+        const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
+
+        if (!token) {
+            return res.status(400).json({ message: 'Google token is required.' });
+        }
+
+        // Verify the ID token
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID || '139317565733-h9ldme7k4qbbfjfhirvduob201fflj83.apps.googleusercontent.com'
+        });
+        const payload = ticket.getPayload();
+        const { email, name } = payload;
+        const normalizedEmail = email.trim().toLowerCase();
+
+        // Search for user in database (Admin first, then Student)
+        let user = await Admin.findOne({ email: normalizedEmail });
+        let userModel = 'Admin';
+
+        if (!user) {
+            user = await Student.findOne({ email: normalizedEmail });
+            userModel = 'Student';
+        }
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                email: normalizedEmail,
+                name: name,
+                message: 'No registered account found with this Google email. Please register first.'
+            });
+        }
+
+        // Student account status restrictions
+        if (userModel === 'Student') {
+            if (user.status === 'Rejected') {
+                return res.status(403).json({
+                    status: 'Rejected',
+                    message: `Your registration request was rejected by the administrator.${user.rejectionReason ? ` Reason: ${user.rejectionReason}` : ''}`
+                });
+            }
+
+            if (user.status === 'Suspended') {
+                return res.status(403).json({
+                    status: 'Suspended',
+                    message: user.penaltyEnd && user.penaltyEnd > new Date()
+                        ? `Your account is temporarily suspended until ${user.penaltyEnd.toLocaleString()} due to policy violations.`
+                        : 'Your account is suspended. Please contact the IT Center administrator.'
+                });
+            }
+
+            if (user.status === 'Deactivated') {
+                return res.status(403).json({
+                    status: 'Deactivated',
+                    message: 'Your account is deactivated. Please contact the administrator.'
+                });
+            }
+        }
+
+        // Successful authentication
+        const { accessToken, refreshToken } = generateTokens(user._id);
+
+        await LoginHistory.create({
+            userId: user._id,
+            userModel,
+            email: normalizedEmail,
+            isSuccess: true,
+            ipAddress,
+            deviceInfo
+        });
+
+        return res.json({
+            success: true,
+            _id: user._id,
+            studentId: user.studentId,
+            name: user.name,
+            email: user.email,
+            role: user.role || 'student',
+            status: userModel === 'Student' ? user.status : 'Approved',
+            token: accessToken,
+            refreshToken
+        });
+
+    } catch (error) {
+        console.error('Google login error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Authentication with Google failed. Please try again.'
+        });
+    }
+};
+
 // @desc    Forgot Password
 // @route   POST /api/auth/forgot-password
 // @access  Public
@@ -793,6 +894,7 @@ const changePassword = async (req, res) => {
 module.exports = {
     registerStudent,
     loginUser,
+    googleLogin,
     forgotPassword,
     resetPassword,
     changePassword

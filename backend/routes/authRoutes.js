@@ -5,6 +5,7 @@ const { protect } = require('../middleware/authMiddleware');
 const {
     registerStudent,
     loginUser,
+    googleLogin,
     forgotPassword,
     resetPassword,
     changePassword
@@ -16,6 +17,7 @@ router.post('/register', upload.fields([
 ]), registerStudent);
 
 router.post('/login', loginUser);
+router.post('/google-login', googleLogin);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
