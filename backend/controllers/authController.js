@@ -291,7 +291,7 @@ const registerStudent = async (req, res) => {
             password: hashedPassword,
             idCardImage: idCardPath,
             profileImage: profilePath,
-            status: 'Pending Approval',
+            status: 'Approved',
             loginAttempts: 0,
             lockUntil: null
         });
@@ -299,7 +299,7 @@ const registerStudent = async (req, res) => {
         return res.status(201).json({
             success: true,
             message:
-                'Registration successful! Your account is pending administrator approval.',
+                'Registration successful! You can now log in to your account.',
             data: {
                 _id: student._id,
                 studentId: student.studentId,
@@ -440,12 +440,6 @@ const loginUser = async (req, res) => {
 
         // Student account restrictions
         if (userModel === 'Student') {
-            if (user.status === 'Pending Approval') {
-                return res.status(403).json({
-                    status: 'Pending Approval',
-                    message: 'Your registration request is pending administrator approval.'
-                });
-            }
 
             if (user.status === 'Rejected') {
                 return res.status(403).json({
