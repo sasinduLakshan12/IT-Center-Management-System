@@ -112,16 +112,16 @@ const Home = () => {
 
     const features = [
         { icon: <Clock size={20} />, color: '#7b61ff', label: '3-Hr Daily Quota', desc: 'Fair usage enforced for all students' },
-        { icon: <ShieldCheck size={20} />, color: '#00d2ff', label: 'Admin Approved', desc: 'Verified student accounts only' },
-        { icon: <BookOpen size={20} />, color: '#00e676', label: 'Smart Booking', desc: 'Reserve your PC in advance' },
-        { icon: <Zap size={20} />, color: '#ff9800', label: 'Instant Check-In', desc: '15-min hold timeout system' },
+        { icon: <ShieldCheck size={20} />, color: '#7b61ff', label: 'Admin Approved', desc: 'Verified student accounts only' },
+        { icon: <BookOpen size={20} />, color: '#7b61ff', label: 'Smart Booking', desc: 'Reserve your PC in advance' },
+        { icon: <Zap size={20} />, color: '#7b61ff', label: 'Instant Check-In', desc: '15-min hold timeout system' },
     ];
 
     const stats = [
         { icon: <Cpu size={18} />, color: '#7b61ff', label: 'Total PCs', value: `${liveStats.totalComputers} Seats (${liveStats.availableComputers} Free)`, pulse: true },
-        { icon: <Users size={18} />, color: '#00d2ff', label: 'Active Students', value: `${liveStats.totalStudents} Registered`, pulse: false },
-        { icon: <Calendar size={18} />, color: '#00e676', label: 'Bookings Today', value: `${liveStats.totalBookingsToday} Reserved`, pulse: false },
-        { icon: <CheckCircle size={18} />, color: '#ff9800', label: 'System Status', value: liveStats.status, pulse: true },
+        { icon: <Users size={18} />, color: '#7b61ff', label: 'Active Students', value: `${liveStats.totalStudents} Registered`, pulse: false },
+        { icon: <Calendar size={18} />, color: '#7b61ff', label: 'Bookings Today', value: `${liveStats.totalBookingsToday} Reserved`, pulse: false },
+        { icon: <CheckCircle size={18} />, color: '#7b61ff', label: 'System Status', value: liveStats.status, pulse: true },
     ];
 
     return (
@@ -497,13 +497,18 @@ const Home = () => {
                                             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: t.textSub }}>{s.label}</span>
                                         </div>
                                         <span style={{
-                                            fontSize: '0.82rem', fontWeight: 700, color: s.color,
+                                            fontSize: '0.82rem', fontWeight: 700,
+                                            color: s.label === 'System Status'
+                                                ? (s.value?.toLowerCase().includes('online') ? '#00e676' : '#ff4b4b')
+                                                : t.text,
                                             display: 'flex', alignItems: 'center', gap: '6px',
                                         }}>
                                             {s.pulse && (
                                                 <span style={{
                                                     width: '7px', height: '7px', borderRadius: '50%',
-                                                    background: s.color,
+                                                    background: s.label === 'System Status'
+                                                        ? (s.value?.toLowerCase().includes('online') ? '#00e676' : '#ff4b4b')
+                                                        : '#7b61ff',
                                                     display: 'inline-block',
                                                     animation: 'pulse 2s infinite',
                                                 }} />
