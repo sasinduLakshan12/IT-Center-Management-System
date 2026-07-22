@@ -1,24 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Hash, BookOpen, Building2, UserPlus, Eye, EyeOff, Monitor, CheckCircle, GraduationCap, Phone } from 'lucide-react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
-import { useEffect } from 'react';
-
-const decodeGoogleToken = (token) => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error("Error decoding token", e);
-    return null;
-  }
-};
 
 // ── Faculty → Departments → Programmes ──────────────────────────────────────
 const FACULTY_DATA = {
@@ -77,35 +60,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [isGoogleAutofilled, setIsGoogleAutofilled] = useState(false);
-
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.state?.googleEmail || location.state?.googleName) {
-      setFormData(prev => ({
-        ...prev,
-        email: location.state.googleEmail || prev.email,
-        name: location.state.googleName || prev.name
-      }));
-      setIsGoogleAutofilled(true);
-    }
-  }, [location.state]);
-
-  const handleGoogleSuccess = (credentialResponse) => {
-    const decoded = decodeGoogleToken(credentialResponse.credential);
-    if (decoded) {
-      setFormData(prev => ({
-        ...prev,
-        name: decoded.name || prev.name,
-        email: decoded.email || prev.email
-      }));
-      setIsGoogleAutofilled(true);
-      setError('');
-    } else {
-      setError('Failed to extract Google profile details.');
-    }
-  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -280,31 +234,13 @@ const Register = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
             {step === 1 ? (
               <>
-                {/* Google Autofill Button */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.2rem', width: '100%', gap: '8px' }}>
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => {
-                      setError('Failed to fetch Google profile. Please fill manually.');
-                    }}
-                    text="signup_with"
-                    theme="filled_blue"
-                    shape="pill"
-                    size="large"
-                    width="356px"
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', margin: '0.4rem 0' }}>
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}></div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>or fill manually</span>
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}></div>
-                  </div>
-                </div>
+
                 {/* Full Name */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Full Name</label>
                   <div style={{ position: 'relative' }}>
                     <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.6)', zIndex: 10 }} />
-                    <input type="text" name="name" className="glass-input" placeholder="John Doe" style={{ paddingLeft: '42px', opacity: isGoogleAutofilled ? 0.75 : 1 }} value={formData.name} onChange={handleChange} required id="reg-name" readOnly={isGoogleAutofilled} />
+                    <input type="text" name="name" className="glass-input" placeholder="John Doe" style={{ paddingLeft: '42px' }} value={formData.name} onChange={handleChange} required id="reg-name" />
                   </div>
                 </div>
 
@@ -322,7 +258,7 @@ const Register = () => {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Email Address</label>
                   <div style={{ position: 'relative' }}>
                     <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.6)', zIndex: 10 }} />
-                    <input type="email" name="email" className="glass-input" placeholder="e.g. personal@gmail.com" style={{ paddingLeft: '42px', opacity: isGoogleAutofilled ? 0.75 : 1 }} value={formData.email} onChange={handleChange} required id="reg-email" readOnly={isGoogleAutofilled} />
+                    <input type="email" name="email" className="glass-input" placeholder="e.g. personal@gmail.com" style={{ paddingLeft: '42px' }} value={formData.email} onChange={handleChange} required id="reg-email" />
                   </div>
                 </div>
 
