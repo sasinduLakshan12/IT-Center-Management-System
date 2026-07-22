@@ -6,51 +6,36 @@ import { useAuth } from '../context/AuthContext';
 // ── Faculty → Departments → Programmes ──────────────────────────────────────
 const FACULTY_DATA = {
   'Faculty of Business Studies': {
-    departments: [
-      'Department of Business Administration',
-      'Department of Accounting & Finance',
-      'Department of Marketing Management',
-      'Department of Human Resource Management',
+    'Department of Business Administration': [
+      'BSc (Hons) Business Administration'
     ],
-    programmes: [
-      'BSc (Hons) Business Administration',
-      'BSc (Hons) Accounting & Finance',
-      'BSc (Hons) Marketing Management',
+    'Department of Accounting & Finance': [
+      'BSc (Hons) Accounting & Finance'
+    ],
+    'Department of Marketing Management': [
+      'BSc (Hons) Marketing Management'
+    ],
+    'Department of Human Resource Management': [
       'BSc (Hons) Human Resource Management',
-      'HND Business Studies',
-    ],
+      'HND Business Studies'
+    ]
   },
   'Faculty of Technological Studies': {
-    departments: [
-      'Department of Information & Communication Technology',
-      'Department of Computer Science',
-      'Department of Engineering Technology',
-      'Department of Information Technology',
-    ],
-    programmes: [
-      'BSc (Hons) Information & Communication Technology Studies (ICTS)',
-      'BSc (Hons) Computer Science',
-      'BSc (Hons) Engineering Technology',
-      'HND Information Technology',
-      'HND Computer Science',
-    ],
+    'Department of Information & Communication Technology': [
+      'BSc (Hons) Information & Communication Technology Studies (ICTS)'
+    ]
   },
   'Faculty of Applied Sciences': {
-    departments: [
-      'Department of Mathematics',
-      'Department of Physics',
-      'Department of Chemistry',
-      'Department of Biology',
-      'Department of Environmental Science',
+    'Department of Mathematics': [
+      'BSc (Hons) Mathematics'
     ],
-    programmes: [
-      'BSc (Hons) Applied Sciences',
-      'BSc (Hons) Mathematics',
-      'BSc (Hons) Physics',
-      'BSc (Hons) Chemistry',
-      'BSc (Hons) Environmental Science',
+    'Department of Information Technology': [
+      'BSc (Hons) Information Technology'
     ],
-  },
+    'Department of Biology': [
+      'BSc (Hons) Biology'
+    ]
+  }
 };
 
 const Register = () => {
@@ -84,6 +69,8 @@ const Register = () => {
     const { name, value, type, checked } = e.target;
     if (name === 'faculty') {
       setFormData(prev => ({ ...prev, faculty: value, programme: '', department: '' }));
+    } else if (name === 'department') {
+      setFormData(prev => ({ ...prev, department: value, programme: '' }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -153,6 +140,7 @@ const Register = () => {
   };
 
   const selectedFaculty = FACULTY_DATA[formData.faculty] || null;
+  const selectedDepartment = selectedFaculty ? selectedFaculty[formData.department] : null;
 
   const selectStyle = { paddingLeft: '42px' };
   const optBg = { background: '#1a1a3a' };
@@ -333,7 +321,7 @@ const Register = () => {
                       <option value="" style={optBg}>
                         {selectedFaculty ? 'Select department...' : 'Select a faculty first'}
                       </option>
-                      {selectedFaculty?.departments.map(d => (
+                      {selectedFaculty && Object.keys(selectedFaculty).map(d => (
                         <option key={d} value={d} style={optBg}>{d}</option>
                       ))}
                     </select>
@@ -354,15 +342,15 @@ const Register = () => {
                       id="reg-programme"
                       style={{
                         ...selectStyle,
-                        opacity: selectedFaculty ? 1 : 0.5,
-                        cursor: selectedFaculty ? 'pointer' : 'not-allowed',
+                        opacity: formData.department ? 1 : 0.5,
+                        cursor: formData.department ? 'pointer' : 'not-allowed',
                       }}
-                      disabled={!selectedFaculty}
+                      disabled={!formData.department}
                     >
                       <option value="" style={optBg}>
-                        {selectedFaculty ? 'Select programme...' : 'Select a faculty first'}
+                        {formData.department ? 'Select programme...' : 'Select a department first'}
                       </option>
-                      {selectedFaculty?.programmes.map(p => (
+                      {selectedDepartment && selectedDepartment.map(p => (
                         <option key={p} value={p} style={optBg}>{p}</option>
                       ))}
                     </select>
