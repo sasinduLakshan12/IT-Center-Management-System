@@ -202,6 +202,25 @@ const AdminComputers = () => {
                 {pc.location && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem', marginBottom: '4px' }}>📍 {pc.location}</p>}
                 {pc.specs && <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>🔧 {pc.specs}</p>}
 
+                {pc.status === 'InUse' && pc.currentUser && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: 'rgba(123, 97, 255, 0.08)',
+                    border: '1px solid rgba(123, 97, 255, 0.25)',
+                    fontSize: '0.8rem',
+                    textAlign: 'left'
+                  }}>
+                    <div style={{ color: '#fff', fontWeight: '600', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={pc.currentUser.name}>
+                      👤 {pc.currentUser.name}
+                    </div>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: '0.75rem', fontWeight: '500' }}>
+                      🆔 {pc.currentUser.studentId}
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                   {pc.status === 'Available' && (

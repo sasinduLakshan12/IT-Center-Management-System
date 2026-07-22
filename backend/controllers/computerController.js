@@ -25,7 +25,25 @@ const getComputers = async (req, res) => {
             ];
         }
 
-        const computers = await Computer.find(query).sort({ pcId: 1 });
+        const computers = await Computer.find(query).sort({ pcId: 1 }).lean();
+
+        // Populate active user details if status is 'InUse'
+        for (let pc of computers) {
+            if (pc.status === 'InUse') {
+                const activeBooking = await Booking.findOne({ 
+                    assignedComputer: pc._id, 
+                    status: 'Active' 
+                }).populate('student', 'name studentId');
+                
+                if (activeBooking && activeBooking.student) {
+                    pc.currentUser = {
+                        name: activeBooking.student.name,
+                        studentId: activeBooking.student.studentId
+                    };
+                }
+            }
+        }
+
         res.json({ success: true, data: computers });
     } catch (error) {
         res.status(500).json({ message: error.message });
